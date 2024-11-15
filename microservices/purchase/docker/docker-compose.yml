@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  db_purchase:
+    build:
+      context: .
+    environment:
+      - POSTGRES_USER=${DB_USER_PURCHASE}
+      - POSTGRES_PASSWORD=${DB_PASSWORD_PURCHASE}
+      - POSTGRES_DB=${DB_PURCHASE_NAME}
+    ports:
+      - "${DB_PORT_PURCHASE}:5432"
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge

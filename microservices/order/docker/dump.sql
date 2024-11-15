@@ -1,0 +1,16 @@
+CREATE SCHEMA IF NOT EXISTS orders;
+
+CREATE TABLE IF NOT EXISTS orders.status_order (
+    id SERIAL PRIMARY KEY,
+    status VARCHAR(50) UNIQUE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS orders.orders (
+    id SERIAL PRIMARY KEY,
+    recipe_name VARCHAR(100) NOT NULL,
+    status_id INT REFERENCES orders.status_order(id),
+    created_at TIMESTAMP(6) WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP(6) WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO orders.status_order (status) VALUES ('PENDIENTE'), ('PROCESANDO'), ('LISTO');
