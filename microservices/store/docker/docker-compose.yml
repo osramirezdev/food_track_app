@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  db_store:
+    build:
+      context: .
+    environment:
+      - POSTGRES_USER=${DB_USER_STORE}
+      - POSTGRES_PASSWORD=${DB_PASSWORD_STORE}
+      - POSTGRES_DB=${DB_STORE_NAME}
+    ports:
+      - "${DB_PORT_STORE}:5432"
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
