@@ -11,8 +11,8 @@ services:
     ports:
       - "${DB_PORT_ORDER}:5432"
     networks:
-      - backend
+      - backend_network
 
 networks:
-  backend:
-    driver: bridge
+  backend_network:
+    external: true
