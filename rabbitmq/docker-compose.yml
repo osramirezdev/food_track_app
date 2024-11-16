@@ -2,7 +2,7 @@ version: "3.8"
 services:
   rabbitmq:
     image: rabbitmq:3-management
-    container_name: rabbitmq_service
+    container_name: rabbitmq
     environment:
       - RABBITMQ_DEFAULT_USER=$RABBITMQ_DEFAULT_USER
       - RABBITMQ_DEFAULT_PASS=$RABBITMQ_DEFAULT_PASS
