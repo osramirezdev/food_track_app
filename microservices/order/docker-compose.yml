@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  db_order:
+    build:
+      context: .
+    environment:
+      - POSTGRES_USER=${DB_USER_ORDER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD_ORDER}
+      - POSTGRES_DB=${DB_ORDER_NAME}
+    ports:
+      - "${DB_PORT_ORDER}:5432"
+    networks:
+      - backend_network  
+
+  order-service:
+    build:
+      context: .  
+      dockerfile: Dockerfile.laravel
+    container_name: order_service
+    ports:
+      - "${MS_ORDER_PORT}:${MS_ORDER_PORT}" 
+    environment:
+      DB_HOST: db_order
+      DB_PORT: ${DB_PORT_ORDER}
+      DB_DATABASE: ${DB_ORDER_NAME}
+      DB_USERNAME: ${DB_USER_ORDER}
+      DB_PASSWORD: ${DB_PASSWORD_ORDER}
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      APP_PORT: ${MS_ORDER_PORT}
+    volumes:
+      - ./microservices/order/:/var/www/html
+    networks:
+      - backend_network
+    depends_on:
+      - db_order
+
+networks:
+  backend_network:
+    external: true
