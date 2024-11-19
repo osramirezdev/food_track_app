@@ -1,0 +1,11 @@
+CREATE SCHEMA IF NOT EXISTS orders;
+
+CREATE TYPE order_status_enum AS ENUM ('PENDIENTE', 'PROCESANDO', 'LISTO');
+
+CREATE TABLE IF NOT EXISTS orders.orders (
+    id SERIAL PRIMARY KEY,
+    recipe_name VARCHAR(100),
+    status order_status_enum DEFAULT 'PENDIENTE'::order_status_enum,
+    created_at TIMESTAMP(6) WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP(6) WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
