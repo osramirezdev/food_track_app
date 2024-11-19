@@ -11,18 +11,20 @@ services:
     ports:
       - "${DB_PORT_ORDER}:5432"
     networks:
-      - backend_network  
+      - internal_network 
+    volumes:
+      - db_order_data:/var/lib/postgresql/data
 
   order-service:
     build:
-      context: .  
+      context: .
       dockerfile: Dockerfile.laravel
     container_name: order_service
     ports:
-      - "${MS_ORDER_PORT}:${MS_ORDER_PORT}" 
+      - "${MS_ORDER_PORT}:${MS_ORDER_PORT}"
     environment:
       DB_HOST: db_order
-      DB_PORT: ${DB_PORT_ORDER}
+      DB_PORT: ${DB_PORT}
       DB_DATABASE: ${DB_ORDER_NAME}
       DB_USERNAME: ${DB_USER_ORDER}
       DB_PASSWORD: ${DB_PASSWORD_ORDER}
@@ -32,12 +34,18 @@ services:
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       APP_PORT: ${MS_ORDER_PORT}
     volumes:
-      - ./microservices/order/:/var/www/html
+      - .:/var/www/html:delegated
     networks:
       - backend_network
+      - internal_network 
     depends_on:
       - db_order
 
 networks:
   backend_network:
     external: true
+  internal_network:
+    driver: bridge 
+
+volumes:
+  db_order_data:

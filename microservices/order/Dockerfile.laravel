@@ -7,17 +7,29 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     libzip-dev \
     zip \
-    && docker-php-ext-install pdo pdo_pgsql sockets
+    postgresql-client \
+    && docker-php-ext-install \
+    pdo \
+    pdo_pgsql \
+    sockets \
+    pcntl \
+    zip \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+COPY ./start-server.sh .
+
+RUN chmod +x start-server.sh
+
 COPY . .
 
-RUN composer install
+RUN composer install --no-dev --optimize-autoloader
+
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 EXPOSE 8000
 
 ENV APP_PORT=${MS_ORDER_PORT:-8000}
 
-CMD ["sh", "-c", "php artisan serve --host=0.0.0.0 --port=${APP_PORT:-8000}"]
+CMD ["/bin/bash", "start-server.sh"]

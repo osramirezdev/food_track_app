@@ -10,7 +10,20 @@ return [
     | Laravel's queue supports a variety of backends via a single, unified
     | API, giving you convenient access to each backend using identical
     | syntax for each. The default queue connection is defined below.
-    |
+    |'rabbitmq' => [
+        'driver' => 'rabbitmq',
+        'connection' => PhpAmqpLib\Connection\AMQPStreamConnection::class,
+        'queue' => env('RABBITMQ_QUEUE', 'default'),
+        'options' => [
+            'host' => env('RABBITMQ_HOST', '127.0.0.1'),
+            'port' => env('RABBITMQ_PORT', 5672),
+            'username' => env('RABBITMQ_USER', 'guest'),
+            'password' => env('RABBITMQ_PASSWORD', 'guest'),
+            'vhost' => env('RABBITMQ_VHOST', '/'),
+        ],
+        'retry_after' => 90,
+        'after_commit' => false,
+    ],
     */
 
     'default' => env('QUEUE_CONNECTION', 'database'),
@@ -40,6 +53,21 @@ return [
             'table' => env('DB_QUEUE_TABLE', 'jobs'),
             'queue' => env('DB_QUEUE', 'default'),
             'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 90),
+            'after_commit' => false,
+        ],
+
+        'rabbitmq' => [
+            'driver' => 'rabbitmq',
+            'connection' => PhpAmqpLib\Connection\AMQPStreamConnection::class,
+            'queue' => env('RABBITMQ_QUEUE', 'default'),
+            'options' => [
+                'host' => env('RABBITMQ_HOST', '127.0.0.1'),
+                'port' => env('RABBITMQ_PORT', 5672),
+                'username' => env('RABBITMQ_USER', 'guest'),
+                'password' => env('RABBITMQ_PASSWORD', 'guest'),
+                'vhost' => env('RABBITMQ_VHOST', '/'),
+            ],
+            'retry_after' => 90,
             'after_commit' => false,
         ],
 

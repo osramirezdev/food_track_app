@@ -9,6 +9,6 @@ class OrderDTOFactory {
 
     public static function createOrderDTO(array $parameters = []): OrderDTO {
         $parameters['status'] = $parameters['status'] ?? OrderStatusEnum::PENDIENTE->value;
-        return new OrderDTO($parameters);
+        return OrderDTO::from($parameters);
     }
 }

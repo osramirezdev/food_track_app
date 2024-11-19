@@ -3,92 +3,60 @@
 namespace App\Services\Order\Impl;
 
 use App\DTOs\OrderDTO;
-use App\Repositories\Impl\OrderRepositoryImpl;
 use App\Services\Order\OrderService;
-use App\Enums\RecipeNameEnum;
-use App\Enums\OrderStatusEnum;
-use App\Factories\OrderDTOFactory;
-use PhpAmqpLib\Connection\AMQPStreamConnection;
-use PhpAmqpLib\Message\AMQPMessage;
+use App\Mappers\OrderMapper;
+use App\Providers\Interfaces\IRabbitMQProvider;
+use App\Repositories\OrderRepository;
+use Exception;
 
 class OrderServiceImpl implements OrderService {
-    private OrderRepositoryImpl $orderRepository;
+    private OrderRepository $orderRepository;
 
     public function __construct(
-        OrderRepositoryImpl $orderRepository
+        OrderRepository $orderRepository
     ) {
         $this->orderRepository = $orderRepository;
     }
 
     public function createOrder(): OrderDTO {
-        $orderId = $this->orderRepository->create([
+        $order = $this->orderRepository->create([
             'recipe_name' => null,
         ]);
-        $orderDTO = OrderDTOFactory::createOrderDTO([
-            'orderId' => $orderId,
-            'recipeName' => null,
-            'status' => OrderStatusEnum::PENDIENTE->value, 
-        ]);
+        $orderDTO = OrderMapper::entityToDto($order);
+        $this->publishOrderToQueue($orderDTO);
         return $orderDTO;
     }
 
     public function updateOrderRecipe(OrderDTO $dto): void {
-        $this->orderRepository->updateRecipeName($dto->orderId, $dto->recipeName);
+        try {
+            $this->orderRepository->updateRecipeName($dto->orderId, $dto->recipeName);
+        } catch (Exception $e) {
+            throw new Exception("Error updating recipe name: " . $e->getMessage());
+        }
     }
 
     public function updateOrderStatus(OrderDTO $dto): void {
-        $this->orderRepository->updateStatus($dto->orderId, $dto->status);
+        try {
+            $this->orderRepository->updateStatus($dto->orderId, $dto->status);
+        } catch (Exception $e) {
+            throw new Exception("Error updating status order: " . $e->getMessage());
+        }
     }
 
-    // aplicamos en esta clase la logica de rabbit para no romper ms arch
-    public function publishOrderToQueue(OrderDTO $dto): void {
-        $connection = $this->createRabbitMQConnection();
-        $channel = $connection->channel();
-
-        $this->declareExch($channel, 'order_exchange');
-
-        $message = $this->createMessage($dto);
-        $this->publishMessage($channel, $message, 'order_exchange', 'order.kitchen');
-
-        $channel->close();
-        $connection->close();
-    }
-
-    private function createRabbitMQConnection(): AMQPStreamConnection {
-        $host = config('rabbitmq.host');
-        $port = config('rabbitmq.port');
-        $user = config('rabbitmq.username');
-        $password = config('rabbitmq.password');
-    
-        return new AMQPStreamConnection($host, $port, $user, $password);
-    }
-
-    private function declareExch($channel, string $exchangeName): void {
-        $channel->exchange_declare(
-            $exchangeName,
-            'topic',
-            false,
-            true,
-            false
-        );
-    }
-
-    private function createMessage(OrderDTO $dto): AMQPMessage {
-        $messageBody = json_encode([
-            'orderId' => $dto->orderId,
-            'recipeName' => $dto->recipeName,
-            'status' => $dto->status,
-        ]);
-
-        $message = new AMQPMessage($messageBody, [
-            'content_type' => 'application/json',
-            'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT,
-        ]);
-    
-        return $message;
-    }
-
-    private function publishMessage($channel, AMQPMessage $message, string $exchangeName, string $routingKey): void {
-        $channel->basic_publish($message, $exchangeName, $routingKey);
+    private function publishOrderToQueue(OrderDTO $dto): void {
+        try {
+            $rabbitMQProvider = app(IRabbitMQProvider::class);
+            $rabbitMQProvider->publish(
+                'order_exchange',
+                'order.kitchen',
+                [
+                    'orderId' => $dto->orderId,
+                    'recipeName' => $dto->recipeName,
+                    'status' => $dto->status,
+                ]
+            );
+        } catch (Exception $e) {
+            throw new Exception("Error publishing RabbitMQ: " . $e->getMessage());
+        }
     }
 }
