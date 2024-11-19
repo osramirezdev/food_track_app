@@ -22,7 +22,7 @@ class OrderRepositoryImpl implements OrderRepository {
     public function updateRecipeName(int $orderId, RecipeNameEnum $recipeName): void {
         DB::beginTransaction();
         try {
-            $updated = OrderEntity::where('id', $orderId)->update(['recipe_name' => $recipeName->value]);
+            $updated = OrderEntity::where('id', $orderId)->update(['recipe_name' => $recipeName->value, 'status' => OrderStatusEnum::PROCESANDO]);
 
             if ($updated === 0) {
                 throw new \Exception("Error updating recipe. Order: {$orderId}");
