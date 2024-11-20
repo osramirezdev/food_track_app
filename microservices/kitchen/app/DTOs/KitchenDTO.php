@@ -1,8 +1,8 @@
 <?php
 
-namespace App\DTOs;
+namespace Kitchen\DTOs;
 
-use App\Enums\RecipeNameEnum;
+use Kitchen\Enums\RecipeNameEnum;
 use Spatie\LaravelData\Data;
 
 class KitchenDTO extends Data {

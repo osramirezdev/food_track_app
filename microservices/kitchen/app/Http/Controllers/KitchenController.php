@@ -2,6 +2,6 @@
 
 namespace Kitchen\Http\Controllers;
 
-abstract class Controller {
+class KitchenController extends Controller {
     //
 }

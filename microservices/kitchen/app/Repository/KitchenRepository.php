@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Repository;
+namespace Kitchen\Repository;
 
 interface KitchenRepository
 {

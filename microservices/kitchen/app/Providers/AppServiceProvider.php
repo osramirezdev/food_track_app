@@ -1,7 +1,18 @@
 <?php
 
-namespace App\Providers;
+namespace Kitchen\Providers;
 
+use Kitchen\Factories\KitchenStrategyFactory;
+use Kitchen\Factories\RabbitMQStrategyFactory;
+use Kitchen\Providers\Interfaces\IRabbitMQKitchenProvider;
+use Kitchen\Repository\KitchenRepository;
+use Kitchen\Repository\Impl\KitchenRepositoryImpl;
+use Kitchen\Service\Impl\KitchenServiceImpl;
+use Kitchen\Service\KitchenService;
+use Kitchen\Strategies\RabbitMQ\Concrete\PublishStrategy;
+use Kitchen\Strategies\Kitchen\Concrete\AvailableIngredientsStrategy;
+use Kitchen\Strategies\Kitchen\Concrete\NotAvailableIngredientsStrategy;
+use Kitchen\Strategies\RabbitMQ\Concrete\ConsumeStrategy;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -9,9 +20,24 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Register any application services.
      */
-    public function register(): void
-    {
-        //
+    public function register(): void {
+        $this->app->singleton(KitchenRepository::class, KitchenRepositoryImpl::class);
+        $this->app->singleton(KitchenService::class, KitchenServiceImpl::class);
+        $this->app->singleton(RabbitMQStrategyFactory::class, function () {
+            return new RabbitMQStrategyFactory([
+                app(PublishStrategy::class),
+                app(ConsumeStrategy::class),
+            ]);
+        });
+        $this->app->singleton(KitchenStrategyFactory::class, function ($app) {
+            return new KitchenStrategyFactory([
+                $app->make(AvailableIngredientsStrategy::class),
+                $app->make(NotAvailableIngredientsStrategy::class),
+            ]);
+        });
+        $this->app->singleton(IRabbitMQKitchenProvider::class, function ($app) {
+            return new RabbitMQKitchenProvider($app->make(RabbitMQStrategyFactory::class));
+        });
     }
 
     /**

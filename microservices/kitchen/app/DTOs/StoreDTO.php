@@ -1,16 +1,18 @@
 <?php
 
-namespace App\DTOs;
+namespace Kitchen\DTOs;
 
-use App\Enums\IngredientEnum;
+use Kitchen\Enums\IngredientEnum;
 use Spatie\LaravelData\Data;
 
 class StoreDTO extends Data {
+    public int $orderId;
     public string $recipeName;
     public array $ingredientsInStore;
 
     public static function fromArray(array $data): self {
         return self::from([
+            'orderId' => $data['orderId'],
             'recipeName' => $data['recipeName'],
             'ingredientsInStore' => array_map(function ($item) {
                 return [

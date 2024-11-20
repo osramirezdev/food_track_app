@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Enums;
+namespace Kitchen\Enums;
 
 enum StoreAvailabilityEnum: string {
     case AVAILABLE = 'Available Ingredients';

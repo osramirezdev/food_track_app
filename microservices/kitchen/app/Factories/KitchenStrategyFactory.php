@@ -1,11 +1,10 @@
 <?php
 
-namespace App\Factories;
+namespace Kitchen\Factories;
 
-use App\DTOs\StoreDTO;
-use App\Enums\StoreAvailabilityEnum;
-use App\Enums\StoreIngredientsEnum;
-use App\Strategy\KitchenStrategy;
+use Kitchen\DTOs\StoreDTO;
+use Kitchen\Enums\StoreAvailabilityEnum;
+use Kitchen\Strategies\Kitchen\KitchenStrategy;
 use InvalidArgumentException;
 
 class KitchenStrategyFactory {

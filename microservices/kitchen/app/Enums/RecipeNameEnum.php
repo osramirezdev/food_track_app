@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Enums;
+namespace Kitchen\Enums;
 
 enum RecipeNameEnum: string {
     case ensalada_de_pollo = 'ensalada_de_pollo';
