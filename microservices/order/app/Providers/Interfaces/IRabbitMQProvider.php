@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Providers\Interfaces;
+namespace Order\Providers\Interfaces;
 
 interface IRabbitMQProvider {
     public function publish(string $exchange, string $routingKey, array $message): void;

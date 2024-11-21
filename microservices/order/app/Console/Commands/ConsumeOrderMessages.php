@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Console\Commands;
+namespace Order\Console\Commands;
 
-use App\Enums\OrderStatusEnum;
-use App\Enums\RecipeNameEnum;
-use App\Factories\OrderDTOFactory;
-use App\Providers\Interfaces\IRabbitMQProvider;
-use App\Services\Order\OrderService;
+use Order\Enums\OrderStatusEnum;
+use Order\Enums\RecipeNameEnum;
+use Order\Factories\OrderDTOFactory;
+use Order\Providers\Interfaces\IRabbitMQProvider;
+use Order\Services\Order\OrderService;
 use Illuminate\Console\Command;
 
 class ConsumeOrderMessages extends Command {

@@ -1,21 +1,24 @@
 <?php
 
-namespace App\Services\Order\Impl;
+namespace Order\Services\Order\Impl;
 
-use App\DTOs\OrderDTO;
-use App\Services\Order\OrderService;
-use App\Mappers\OrderMapper;
-use App\Providers\Interfaces\IRabbitMQProvider;
-use App\Repositories\OrderRepository;
+use Order\DTOs\OrderDTO;
+use Order\Services\Order\OrderService;
+use Order\Mappers\OrderMapper;
+use Order\Providers\Interfaces\IRabbitMQProvider;
+use Order\Repositories\OrderRepository;
 use Exception;
 
 class OrderServiceImpl implements OrderService {
     private OrderRepository $orderRepository;
+    private IRabbitMQProvider $provider;
 
     public function __construct(
-        OrderRepository $orderRepository
+        OrderRepository $orderRepository,
+        IRabbitMQProvider $provider
     ) {
         $this->orderRepository = $orderRepository;
+        $this->provider = $provider;
     }
 
     public function createOrder(): OrderDTO {
@@ -45,8 +48,7 @@ class OrderServiceImpl implements OrderService {
 
     private function publishOrderToQueue(OrderDTO $dto): void {
         try {
-            $rabbitMQProvider = app(IRabbitMQProvider::class);
-            $rabbitMQProvider->publish(
+            $this->provider->publish(
                 'order_exchange',
                 'order.kitchen',
                 [

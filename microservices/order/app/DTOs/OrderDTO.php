@@ -1,9 +1,9 @@
 <?php
 
-namespace App\DTOs;
+namespace Order\DTOs;
 
-use App\Enums\OrderStatusEnum;
-use App\Enums\RecipeNameEnum;
+use Order\Enums\OrderStatusEnum;
+use Order\Enums\RecipeNameEnum;
 use Spatie\LaravelData\Data;
 
 class OrderDTO extends Data {

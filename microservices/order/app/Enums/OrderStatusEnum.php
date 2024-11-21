@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Enums;
+namespace Order\Enums;
 
 enum OrderStatusEnum: string {
     case PENDIENTE = 'PENDIENTE';

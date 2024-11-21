@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Providers;
+namespace Order\Providers;
 
-use App\Providers\Interfaces\IRabbitMQProvider;
+use Order\Providers\Interfaces\IRabbitMQProvider;
 use Exception;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;

@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Repositories\Impl;
+namespace Order\Repositories\Impl;
 
-use App\Repositories\OrderRepository;
-use App\Entities\OrderEntity;
-use App\Enums\OrderStatusEnum;
-use App\Enums\RecipeNameEnum;
+use Order\Repositories\OrderRepository;
+use Order\Entities\OrderEntity;
+use Order\Enums\OrderStatusEnum;
+use Order\Enums\RecipeNameEnum;
 use Illuminate\Support\Facades\DB;
 
 class OrderRepositoryImpl implements OrderRepository {

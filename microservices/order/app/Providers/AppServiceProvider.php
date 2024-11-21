@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Providers;
+namespace Order\Providers;
 
-use App\Providers\Interfaces\IRabbitMQProvider;
-use App\Repositories\Impl\OrderRepositoryImpl;
-use App\Repositories\OrderRepository;
-use App\Services\Order\Impl\OrderServiceImpl;
-use App\Services\Order\OrderService;
+use Order\Providers\Interfaces\IRabbitMQProvider;
+use Order\Repositories\Impl\OrderRepositoryImpl;
+use Order\Repositories\OrderRepository;
+use Order\Services\Order\Impl\OrderServiceImpl;
+use Order\Services\Order\OrderService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
