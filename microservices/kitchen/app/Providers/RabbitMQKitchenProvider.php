@@ -2,6 +2,7 @@
 
 namespace Kitchen\Providers;
 
+use Illuminate\Support\Facades\Log;
 use Kitchen\Factories\RabbitMQStrategyFactory;
 use Kitchen\Providers\Interfaces\IRabbitMQKitchenProvider;
 use PhpAmqpLib\Channel\AMQPChannel;
@@ -33,6 +34,7 @@ class RabbitMQKitchenProvider implements IRabbitMQKitchenProvider {
         $channel = $this->connection->channel();
 
         $strategy = $this->strategyFactory->getStrategy($type);
+        Log::debug("Se ha obtenido la estregia ", ["strategy" => $strategy]);
 
         $strategy->execute(array_merge(['channel' => $channel], $params));
 
@@ -42,5 +44,18 @@ class RabbitMQKitchenProvider implements IRabbitMQKitchenProvider {
     public function getChannel(): AMQPChannel {
         $this->connect();
         return $this->connection->channel();
+    }
+
+    public function declareExchange(string $exchangeName, string $type = 'topic', bool $durable = true): void {
+        $this->connect();
+        $channel = $this->getChannel();
+        Log::debug("Declaring Exchange. Channel: ", ["channel" => $channel]);
+        $channel->exchange_declare(
+            $exchangeName,
+            $type,
+            false,
+            $durable,
+            false
+        );
     }
 }

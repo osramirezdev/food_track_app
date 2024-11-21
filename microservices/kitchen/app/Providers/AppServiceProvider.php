@@ -21,30 +21,44 @@ class AppServiceProvider extends ServiceProvider
      * Register any application services.
      */
     public function register(): void {
+        $this->bindRepositories();
+        $this->bindServices();
+        $this->bindFactories();
+        $this->bindProviders();
+    }
+
+    /**
+     * Bootstrap any application services.
+     */
+    public function boot(): void{}
+
+    private function bindRepositories(): void {
         $this->app->singleton(KitchenRepository::class, KitchenRepositoryImpl::class);
+    }
+
+    private function bindServices(): void {
         $this->app->singleton(KitchenService::class, KitchenServiceImpl::class);
-        $this->app->singleton(RabbitMQStrategyFactory::class, function () {
-            return new RabbitMQStrategyFactory([
-                app(PublishStrategy::class),
-                app(ConsumeStrategy::class),
-            ]);
-        });
+    }
+
+    private function bindFactories(): void {
         $this->app->singleton(KitchenStrategyFactory::class, function ($app) {
             return new KitchenStrategyFactory([
                 $app->make(AvailableIngredientsStrategy::class),
                 $app->make(NotAvailableIngredientsStrategy::class),
             ]);
         });
-        $this->app->singleton(IRabbitMQKitchenProvider::class, function ($app) {
-            return new RabbitMQKitchenProvider($app->make(RabbitMQStrategyFactory::class));
+
+        $this->app->singleton(RabbitMQStrategyFactory::class, function () {
+            return new RabbitMQStrategyFactory([
+                app(PublishStrategy::class),
+                app(ConsumeStrategy::class),
+            ]);
         });
     }
 
-    /**
-     * Bootstrap any application services.
-     */
-    public function boot(): void
-    {
-        //
+    private function bindProviders(): void {
+        $this->app->singleton(IRabbitMQKitchenProvider::class, function ($app) {
+            return new RabbitMQKitchenProvider($app->make(RabbitMQStrategyFactory::class));
+        });
     }
 }
