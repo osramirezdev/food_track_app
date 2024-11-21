@@ -2,6 +2,7 @@
 
 namespace Kitchen\Strategies\RabbitMQ\Concrete;
 
+use Illuminate\Support\Facades\Log;
 use Kitchen\Strategies\RabbitMQ\RabbitMQStrategy;
 use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerInterface;
@@ -29,6 +30,7 @@ class PublishStrategy implements RabbitMQStrategy {
             ]
         );
         $this->logger->info('Message created: ' . json_encode($params['message']));
+        Log::channel('console')->info('Testing spatie log'. json_encode($params['message']));
 
         $params['channel']->queue_declare('kitchen_exchange', false, true, false, false);
         $this->logger->info('QUEUE "kitchen_exchange" ready for publish.');

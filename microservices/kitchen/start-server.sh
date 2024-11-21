@@ -1,6 +1,10 @@
 #!/bin/bash
 
-php artisan serve --host=0.0.0.0 --port=${APP_PORT:-8000} &
+set -a
+source .env
+set +a
+
+php artisan serve --host=0.0.0.0 --port=${MS_KITCHEN_PORT:-8000} &
 
 LARAVEL_PID=$!
 

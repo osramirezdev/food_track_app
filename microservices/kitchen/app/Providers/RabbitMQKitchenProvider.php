@@ -2,6 +2,7 @@
 
 namespace Kitchen\Providers;
 
+use Exception;
 use Illuminate\Support\Facades\Log;
 use Kitchen\Factories\RabbitMQStrategyFactory;
 use Kitchen\Providers\Interfaces\IRabbitMQKitchenProvider;
@@ -18,8 +19,19 @@ class RabbitMQKitchenProvider implements IRabbitMQKitchenProvider {
         $this->strategyFactory = $strategyFactory;
     }
 
+    private function validateConfiguration(): void {
+        $requiredKeys = ['host', 'port', 'username', 'password', 'queue'];
+        foreach ($requiredKeys as $key) {
+            if (empty(config("rabbitmq.$key"))) {
+                throw new Exception("RabbitMQ '$key' not defined.");
+            }
+            Log::channel('console')->info("RabbitMQ '$key' defined.");
+        }
+    }
+
     private function connect(): void {
         if ($this->connection === null || !$this->connection->isConnected()) {
+            $this->validateConfiguration();
             $this->connection = new AMQPStreamConnection(
                 config('rabbitmq.host'),
                 config('rabbitmq.port'),
@@ -57,5 +69,21 @@ class RabbitMQKitchenProvider implements IRabbitMQKitchenProvider {
             $durable,
             false
         );
+    }
+
+    public function declareQueueWithBindings(string $queueName, string $exchangeName, string $routingKey): void {
+        $this->connect();
+        $channel = $this->getChannel();
+
+        $channel->queue_declare($queueName, false, true, false, false);
+        $channel->queue_bind($queueName, $exchangeName, $routingKey);
+
+        Log::info("Queue '{$queueName}' bound to exchange '{$exchangeName}' with routing key '{$routingKey}'");
+    }
+
+    public function __destruct() {
+        if ($this->connection) {
+            $this->connection->close();
+        }
     }
 }

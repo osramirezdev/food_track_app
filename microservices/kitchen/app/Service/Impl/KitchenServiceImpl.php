@@ -22,8 +22,12 @@ class KitchenServiceImpl implements KitchenService {
     }
 
     public function initializeRabbitMQ(): void {
-        Log::debug("inicializando rabbit para kitchen");
+        Log::channel('console')->debug("Init exchange and binding for RabbitMQ Kitchen");
         $this->provider->declareExchange('kitchen_exchange', 'topic');
+        $this->provider->declareQueueWithBindings('kitchen_queue', 'order_exchange', '*.kitchen.*');
+
+        Log::channel('console')->debug("Configuración de RabbitMQ completada.");
+
     }
 
     public function selectRandomRecipe(): string {

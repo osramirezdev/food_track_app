@@ -8,9 +8,10 @@ use Order\Factories\OrderDTOFactory;
 use Order\Providers\Interfaces\IRabbitMQProvider;
 use Order\Services\Order\OrderService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class ConsumeOrderMessages extends Command {
-    private IRabbitMQProvider $messageQueueProvider;
+    private IRabbitMQProvider $provider;
     private OrderService $orderService;
     /**
      * The name and signature of the console command.
@@ -26,9 +27,9 @@ class ConsumeOrderMessages extends Command {
      */
     protected $description = 'Command description';
 
-    public function __construct(IRabbitMQProvider $messageQueueProvider, OrderService $orderService) {
+    public function __construct(IRabbitMQProvider $provider, OrderService $orderService) {
         parent::__construct();
-        $this->messageQueueProvider = $messageQueueProvider;
+        $this->provider = $provider;
         $this->orderService = $orderService;
     }
 
@@ -36,32 +37,30 @@ class ConsumeOrderMessages extends Command {
      * Execute the console command.
      */
     public function handle() {
-        $this->messageQueueProvider->consume('order.kitchen', function ($message) {
-            $messageBody = $message->getBody();    
-            $orderData = json_decode($messageBody, true);
+        Log::channel('console')->info("Init Order consumer");
+        $this->orderService->initializeRabbitMQ();
+        $this->provider->consume('order.kitchen', function ($message) {
+            $orderData = json_decode($message->getBody(), true);
+            Log::channel('console')->info("Data received", ["orderData" => $orderData]);
 
-            if (isset($orderData['orderId']) && isset($orderData['recipeName'])) {
-                try {
-                    $recipeName = $orderData['recipeName'];
-                    if (!in_array($recipeName, RecipeNameEnum::getValues())) {
-                        $this->error("Invalid Recipe: {$recipeName}");
-                        return;
-                    }
-
-                    $orderDTO = OrderDTOFactory::createOrderDTO([
-                        'orderId' => $orderData['orderId'],
-                        'recipeName' => RecipeNameEnum::from($orderData['recipeName']),
-                        'status' => OrderStatusEnum::PROCESANDO,
-                    ]);
-
-                    $this->orderService->updateOrderRecipe($orderDTO);
-                    $this->info("Receta actualizada para la orden ID: {$orderData['orderId']}");
-
-                } catch (\Exception $e) {
-                    $this->error('Error al actualizar la receta: ' . $e->getMessage());
-                }
+            if (isset($orderData['orderId'], $orderData['recipeName'])) {
+                $this->processOrderMessage($orderData);
             }
         });
     }
 
+    private function processOrderMessage(array $orderData): void {
+        try {
+            $orderDTO = OrderDTOFactory::createOrderDTO([
+                'orderId' => $orderData['orderId'],
+                'recipeName' => $orderData['recipeName'],
+                'status' => OrderStatusEnum::PROCESANDO,
+            ]);
+
+            $this->orderService->updateOrderRecipe($orderDTO);
+            $this->info("Order updated: {$orderData['orderId']} with recipe: {$orderData['recipeName']}");
+        } catch (\Exception $e) {
+            $this->error("Error updating order: " . $e->getMessage());
+        }
+    }
 }

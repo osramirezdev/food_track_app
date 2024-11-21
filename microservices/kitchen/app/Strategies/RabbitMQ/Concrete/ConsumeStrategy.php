@@ -2,6 +2,7 @@
 
 namespace Kitchen\Strategies\RabbitMQ\Concrete;
 
+use Illuminate\Support\Facades\Log;
 use Kitchen\Strategies\RabbitMQ\RabbitMQStrategy;
 use Psr\Log\LoggerInterface;
 
@@ -20,12 +21,12 @@ class ConsumeStrategy implements RabbitMQStrategy {
     }
 
     public function execute(array $params): void {
+        Log::channel('console')->info('Init spatie log'. json_encode($params));
 
-        $params['channel']->queue_declare('kitchen_exchange', false, true, false, false);
+        $params['channel']->queue_declare($params['queue'], false, true, false, false);
+        $params['channel']->queue_bind($params['queue'], 'order_exchange', '*.kitchen.*');
         $this->logger->info('QUEUE "kitchen_exchange" correctly declared.');
-
-        $params['channel']->queue_bind('kitchen_exchange', 'order_exchange', 'order.kitchen');
-        $this->logger->info('QUEUE "kitchen_exchange" binding "order_exchange" with routing "order.kitchen".');
+        $this->logger->info('QUEUE "kitchen_exchange" binding other exchanges with routing "*.kitchen.*".');
 
         $params['channel']->basic_consume(
             $params['queue'],

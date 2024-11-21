@@ -8,6 +8,7 @@ use Order\Mappers\OrderMapper;
 use Order\Providers\Interfaces\IRabbitMQProvider;
 use Order\Repositories\OrderRepository;
 use Exception;
+use Illuminate\Support\Facades\Log;
 
 class OrderServiceImpl implements OrderService {
     private OrderRepository $orderRepository;
@@ -19,6 +20,11 @@ class OrderServiceImpl implements OrderService {
     ) {
         $this->orderRepository = $orderRepository;
         $this->provider = $provider;
+    }
+
+    public function initializeRabbitMQ(): void {
+        Log::channel('console')->debug("Init Rabbit Order");
+        $this->provider->declareExchange('order_exchange', 'topic');
     }
 
     public function createOrder(): OrderDTO {
