@@ -29,16 +29,16 @@ class PublishStrategy implements RabbitMQStrategy {
                 'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT,
             ]
         );
-        $this->logger->info('Message created: ' . json_encode($params['message']));
+        $this->logger->info('Publishing message: ' . json_encode($params['message']));
         Log::channel('console')->info('Testing spatie log'. json_encode($params['message']));
-
-        $params['channel']->queue_declare('kitchen_exchange', false, true, false, false);
-        $this->logger->info('QUEUE "kitchen_exchange" ready for publish.');
 
         $params['channel']->basic_publish(
             $message,
-            $params['exchange'],
-            $params['routingKey']
+            $params['exchange'],   // Usamos el exchange dinámicamente
+            $params['routingKey']  // Usamos el routingKey dinámicamente
         );
+        Log::channel('console')->info('Message published to exchange: ' . $params['exchange'] . ', and routing key: ' . $params['routingKey']);
+        $this->logger->info('Message published to exchange: ' . $params['exchange'] . ', and routing key: ' . $params['routingKey']);
+
     }
 }

@@ -6,7 +6,7 @@ use Kitchen\Enums\IngredientEnum;
 use Spatie\LaravelData\Data;
 
 class StoreDTO extends Data {
-    public int $orderId;
+    public ?int $orderId;
     public string $recipeName;
     public array $ingredientsInStore;
 
@@ -21,6 +21,19 @@ class StoreDTO extends Data {
                     'current_stock' => $item['current_stock'],
                 ];
             }, $data['ingredientsInStore']),
+        ]);
+    }
+
+    public static function fromRecipe(int $orderId, string $recipeName, array $ingredients): self {
+        return self::from([
+            'orderId' => $orderId,
+            'recipeName' => $recipeName,
+            'ingredients' => array_map(function ($ingredient) {
+                return [
+                    'ingredient' => IngredientEnum::from($ingredient['ingredient_name']),
+                    'quantity_required' => $ingredient['quantity_required'],
+                ];
+            }, $ingredients),
         ]);
     }
 }

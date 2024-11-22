@@ -22,7 +22,6 @@ class ConsumeStrategy implements RabbitMQStrategy {
 
     public function execute(array $params): void {
         Log::channel('console')->info('Init spatie log'. json_encode($params));
-
         $params['channel']->queue_declare($params['queue'], false, true, false, false);
         $params['channel']->queue_bind($params['queue'], 'order_exchange', '*.kitchen.*');
         $this->logger->info('QUEUE "kitchen_exchange" correctly declared.');

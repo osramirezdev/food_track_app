@@ -2,7 +2,6 @@
 
 namespace Kitchen\Repository;
 
-interface KitchenRepository
-{
-    //
+interface KitchenRepository {
+    public function getIngredientsByRecipe(string $recipeName): array;
 }
