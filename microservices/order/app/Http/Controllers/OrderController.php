@@ -37,26 +37,4 @@ class OrderController extends Controller {
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-
-    #[Post('update-recipe')]
-    public function updateRecipeName(Request $request): JsonResponse {
-        try {
-            $dto = new OrderDTO($request->all());
-            $this->orderService->updateOrderRecipe($dto);
-            return response()->json(['message' => 'Recipe name updated successfully'], 200);
-        } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
-    }
-
-    #[Post('update-status')]
-    public function updateStatus(Request $request): JsonResponse {
-        try {
-            $dto = new OrderDTO($request->all());
-            $this->orderService->updateOrderStatus($dto);
-            return response()->json(['message' => 'Order status updated successfully'], 200);
-        } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
-    }
 }

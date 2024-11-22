@@ -29,6 +29,12 @@ class KitchenServiceImpl implements KitchenService {
     public function initializeRabbitMQ(): void {
         Log::channel('console')->debug("Init exchange and binding for RabbitMQ Kitchen");
         $this->provider->declareExchange('kitchen_exchange', 'topic');
+        /**
+         * FIXME
+         * Find an approach in order to avoid declaration of exchanges, without depending on other microservices.
+         * Exchanges are idempotent, so they are not created if they already exist
+         */
+        $this->provider->declareExchange('order_exchange', 'topic');
         $this->provider->declareQueueWithBindings('kitchen_queue', 'order_exchange', '*.kitchen.*');
         Log::channel('console')->debug("Configuración de RabbitMQ completada.");
     }
@@ -37,6 +43,7 @@ class KitchenServiceImpl implements KitchenService {
         $recipes = RecipeNameEnum::getValues();
         $recipeName = $recipes[array_rand($recipes)];
         $ingredients = $this->repository->getIngredientsByRecipe($recipeName);
+        Log::channel('console')->debug("Ingredients ", ["ingredients"=>$ingredients]);
         $storeDTO = StoreDTO::fromRecipe(
             0,
             $recipeName,
@@ -52,7 +59,7 @@ class KitchenServiceImpl implements KitchenService {
             'callback' => function ($message) {
                 $data = json_decode($message->getBody(), true);
                 $routingKey = $message->get('routing_key');
-
+                Log::channel('console')->debug("Se recibe este routin key {$routingKey}");
                 if (str_starts_with($routingKey, 'order.')) {
                     $storeDTO = $this->selectRandomRecipe();
                     $storeDTO->orderId = $data['orderId'];

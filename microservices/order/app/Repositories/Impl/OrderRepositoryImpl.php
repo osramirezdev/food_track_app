@@ -7,6 +7,7 @@ use Order\Entities\OrderEntity;
 use Order\Enums\OrderStatusEnum;
 use Order\Enums\RecipeNameEnum;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class OrderRepositoryImpl implements OrderRepository {
 
@@ -19,33 +20,41 @@ class OrderRepositoryImpl implements OrderRepository {
         return $order;
     }
 
-    public function updateRecipeName(int $orderId, RecipeNameEnum $recipeName): void {
+    public function updateRecipeName(OrderEntity $order): void {
         DB::beginTransaction();
         try {
-            $updated = OrderEntity::where('id', $orderId)->update(['recipe_name' => $recipeName->value, 'status' => OrderStatusEnum::PROCESANDO]);
+            $updated = OrderEntity::where('id', $order->id)->update([
+                'recipe_name' => $order->recipe_name,
+                'status' => $order->status ? OrderStatusEnum::from($order->status)->value : null,
+            ]);
 
             if ($updated === 0) {
-                throw new \Exception("Error updating recipe. Order: {$orderId}");
+                throw new \Exception("Error updating recipe. Order: {$order->id}");
             }
 
             DB::commit();
         } catch (\Exception $e) {
+            Log::channel('console')->debug("Error updating ", ["data" => $e]);
             DB::rollBack();
             throw $e;
         }
     }
 
-    public function updateStatus(int $orderId, OrderStatusEnum $status): void {
+    public function updateStatus(OrderEntity $order): void {
         DB::beginTransaction();
         try {
-            $updated = OrderEntity::where('id', $orderId)->update(['status' => $status->value]);
+            $updated = OrderEntity::where('id', $order->id)->update([
+                'recipe_name' => $order->recipe_name,
+                'status' => $order->status ? OrderStatusEnum::from($order->status)->value : null,
+            ]);
 
             if ($updated === 0) {
-                throw new \Exception("Error updating status. Order: {$orderId}");
+                throw new \Exception("Error updating status. Order: {$order->id}");
             }
 
             DB::commit();
         } catch (\Exception $e) {
+            Log::channel('console')->debug("Error updating ", ["data" => $e]);
             DB::rollBack();
             throw $e;
         }

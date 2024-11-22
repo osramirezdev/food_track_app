@@ -205,7 +205,7 @@ class StoreDTO extends Data {
             'recipeName' => $recipeName,
             'ingredients' => array_map(function ($ingredient) {
                 return [
-                    'ingredient' => IngredientEnum::from($ingredient['ingredient_name']),
+                    'ingredient' => IngredientEnum::from($ingredient['recipeName']),
                     'quantity_required' => $ingredient['quantity_required'],
                 ];
             }, $ingredients),
