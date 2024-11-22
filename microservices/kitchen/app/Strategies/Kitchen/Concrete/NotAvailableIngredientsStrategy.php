@@ -34,7 +34,7 @@ class NotAvailableIngredientsStrategy implements KitchenStrategy {
         $orderDTO = OrderDTO::from([
             "orderId"=> $storeDTO->orderId,
             "recipeName"=> $storeDTO->recipeName,
-            "status" => $storeDTO->status,
+            "status" => OrderStatusEnum::ESPERANDO,
         ]);
         $this->provider->executeStrategy('publish', [
             'channel' => $this->provider->getChannel(),
