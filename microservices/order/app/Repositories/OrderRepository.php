@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Repositories;
+namespace Order\Repositories;
 
-use App\Entities\OrderEntity;
-use App\Enums\OrderStatusEnum;
-use App\Enums\RecipeNameEnum;
+use Order\Entities\OrderEntity;
+use Order\Enums\OrderStatusEnum;
+use Order\Enums\RecipeNameEnum;
 
 interface OrderRepository {
     public function create(array $data): OrderEntity;

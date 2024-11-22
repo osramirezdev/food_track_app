@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Mappers;
+namespace Order\Mappers;
 
-use App\DTOs\OrderDTO;
-use App\Entities\OrderEntity;
-use App\Enums\OrderStatusEnum;
-use App\Enums\RecipeNameEnum;
-use App\Factories\OrderDTOFactory;
+use Order\DTOs\OrderDTO;
+use Order\Entities\OrderEntity;
+use Order\Enums\OrderStatusEnum;
+use Order\Enums\RecipeNameEnum;
+use Order\Factories\OrderDTOFactory;
 
 class OrderMapper {
     public static function dtoToEntity(OrderDTO $orderDTO): OrderEntity {

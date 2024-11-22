@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Factories;
+namespace Order\Factories;
 
-use App\DTOs\OrderDTO;
-use App\Enums\OrderStatusEnum;
+use Order\DTOs\OrderDTO;
+use Order\Enums\OrderStatusEnum;
 
 class OrderDTOFactory {
 

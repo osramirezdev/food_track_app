@@ -1,9 +1,11 @@
 <?php
 
-namespace App\Providers;
+namespace Order\Providers;
 
-use App\Providers\Interfaces\IRabbitMQProvider;
+use Order\Providers\Interfaces\IRabbitMQProvider;
 use Exception;
+use Illuminate\Support\Facades\Log;
+use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
@@ -14,8 +16,9 @@ class RabbitMQProvider implements IRabbitMQProvider{
         $requiredKeys = ['host', 'port', 'username', 'password', 'queue'];
         foreach ($requiredKeys as $key) {
             if (empty(config("rabbitmq.$key"))) {
-                throw new Exception("La configuración de RabbitMQ '$key' no está definida.");
+                throw new Exception("RabbitMQ '$key' not configured.");
             }
+            Log::channel('console')->info("RabbitMQ '$key' defined.");
         }
     }
 
@@ -31,6 +34,7 @@ class RabbitMQProvider implements IRabbitMQProvider{
                 );
             } catch (Exception $e) {
                 logger()->error("Error connecting RabbitMQ: {$e->getMessage()}");
+                Log::error("Error initializing rabbit ", ["error" => $e->getMessage()]);
                 throw $e;
             }
         }
@@ -38,31 +42,10 @@ class RabbitMQProvider implements IRabbitMQProvider{
 
     public function publish(string $exchange, string $routingKey, array $messageBody): void {
         try {
+            $this->declareExchange($exchange, 'topic');
+
             $this->connect();
-
             $channel = $this->connection->channel();
-
-            $channel->exchange_declare(
-                $exchange,
-                'topic',
-                false,
-                true,
-                false
-            );
-
-            $channel->queue_declare(
-                $routingKey,
-                false,
-                true,
-                false,
-                false
-            );
-
-            $channel->queue_bind(
-                $routingKey,
-                $exchange,
-                $routingKey
-            );
 
             $message = new AMQPMessage(json_encode($messageBody), [
                 'content_type' => 'application/json',
@@ -70,8 +53,6 @@ class RabbitMQProvider implements IRabbitMQProvider{
             ]);
 
             $channel->basic_publish($message, $exchange, $routingKey);
-
-            $channel->close();
         } catch (Exception $e) {
             logger()->error('Error al publicar mensaje en RabbitMQ: ' . $e->getMessage());
             throw $e;
@@ -96,6 +77,24 @@ class RabbitMQProvider implements IRabbitMQProvider{
             logger()->error('Error al consumir RabbitMQ: ' . $e->getMessage());
             throw $e;
         }
+    }
+
+    public function getChannel(): AMQPChannel {
+        $this->connect();
+        return $this->connection->channel();
+    }
+
+    public function declareExchange(string $exchangeName, string $type = 'topic', bool $durable = true): void {
+        $this->connect();
+        $channel = $this->getChannel();
+        Log::debug("Declaring Exchange. Channel: ", ["channel" => $channel]);
+        $channel->exchange_declare(
+            $exchangeName,
+            $type,
+            false,
+            $durable,
+            false
+        );
     }
 
     public function __destruct() {

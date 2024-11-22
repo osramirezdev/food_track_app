@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace Order\Http\Controllers;
 
-use App\DTOs\OrderDTO;
-use App\Services\Order\OrderService;
+use Order\DTOs\OrderDTO;
+use Order\Services\Order\OrderService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

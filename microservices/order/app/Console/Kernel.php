@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Console;
+namespace Order\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
-use App\Console\Commands\ConsumeOrderMessages;
+use Order\Console\Commands\ConsumeOrderMessages;
 
 class Kernel extends ConsoleKernel {
     protected $commands = [
