@@ -45,11 +45,7 @@ class OrderServiceImpl implements OrderService {
                 $data = json_decode($message->getBody(), true);
                 $routingKey = $message->get('routing_key');
                 Log::channel('console')->debug("Se recibe este id ", ["data" => $data]);
-                $orderDTO = OrderDTO::from([
-                    'orderId'=> $data['orderId'],
-                    'recipeName'=> RecipeNameEnum::from($data['recipeName']),
-                    'status'=> OrderStatusEnum::from($data['status']),
-                ]);
+                $orderDTO = OrderDTO::from($data);
                 $this->updateOrderRecipe($orderDTO);
                 Log::info("Consuming from routing key: {$routingKey}");
 
@@ -90,11 +86,12 @@ class OrderServiceImpl implements OrderService {
     private function publishToKitchen(OrderDTO $dto): void {
         try {
             Log::channel('console')->debug("Publicando a kitchen ", ["data" => $dto]);
+            $message = json_encode($dto->toArray());
             $this->provider->executeStrategy('publish', [
                 'channel' => $this->provider->getChannel(),
                 'exchange' => 'order_exchange',
                 'routingKey' => 'order.kitchen.*',
-                'message' => $dto->toJson(),
+                'message' => $message,
             ]);
         } catch (Exception $e) {
             throw new Exception("Error publishing RabbitMQ: " . $e->getMessage());

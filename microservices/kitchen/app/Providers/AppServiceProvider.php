@@ -4,6 +4,7 @@ namespace Kitchen\Providers;
 
 use Kitchen\Factories\KitchenStrategyFactory;
 use Kitchen\Factories\RabbitMQStrategyFactory;
+use Kitchen\Mappers\StoreDTOMapper;
 use Kitchen\Providers\Interfaces\IRabbitMQKitchenProvider;
 use Kitchen\Repository\KitchenRepository;
 use Kitchen\Repository\Impl\KitchenRepositoryImpl;
@@ -25,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
         $this->bindServices();
         $this->bindFactories();
         $this->bindProviders();
+        $this->bindMappers();
     }
 
     /**
@@ -59,6 +61,12 @@ class AppServiceProvider extends ServiceProvider
     private function bindProviders(): void {
         $this->app->singleton(IRabbitMQKitchenProvider::class, function ($app) {
             return new RabbitMQKitchenProvider($app->make(RabbitMQStrategyFactory::class));
+        });
+    }
+
+    private function bindMappers(): void {
+        $this->app->bind(StoreDTOMapper::class, function ($app): StoreDTOMapper {
+            return new StoreDTOMapper();
         });
     }
 }

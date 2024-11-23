@@ -3,12 +3,13 @@
 namespace Kitchen\Strategies\Kitchen\Concrete;
 
 use Kitchen\DTOs\StoreDTO;
+use Kitchen\Enums\RecipeNameEnum;
 use Kitchen\Enums\StoreAvailabilityEnum;
 use Kitchen\Strategies\Kitchen\KitchenStrategy;
 use Illuminate\Support\Facades\Log;
 use Kitchen\Enums\OrderStatusEnum;
 use Kitchen\Providers\Interfaces\IRabbitMQKitchenProvider;
-use Order\DTOs\OrderDTO;
+use Kitchen\DTOs\OrderDTO;
 
 class NotAvailableIngredientsStrategy implements KitchenStrategy {
     private IRabbitMQKitchenProvider $provider;
@@ -31,11 +32,11 @@ class NotAvailableIngredientsStrategy implements KitchenStrategy {
     }
 
     private function publishToOrder(StoreDTO $storeDTO): void {
-        $orderDTO = OrderDTO::from([
-            "orderId"=> $storeDTO->orderId,
-            "recipeName"=> $storeDTO->recipeName,
-            "status" => OrderStatusEnum::ESPERANDO,
-        ]);
+        $orderDTO = new OrderDTO(
+            $storeDTO->orderId,
+            RecipeNameEnum::from($storeDTO->recipeName),
+            OrderStatusEnum::ESPERANDO,
+        );
         $this->provider->executeStrategy('publish', [
             'channel' => $this->provider->getChannel(),
             'exchange' => 'kitchen_exchange',

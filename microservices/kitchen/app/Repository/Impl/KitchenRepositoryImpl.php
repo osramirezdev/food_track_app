@@ -12,6 +12,12 @@ class KitchenRepositoryImpl implements KitchenRepository {
                 ->where('recipe_name', $recipeName)
                 ->select('ingredient_name', 'quantity_required')
                 ->get()
+                ->map(function ($ingredient) {
+                    return [
+                        'ingredient_name' => $ingredient->ingredient_name,
+                        'quantity_required' => $ingredient->quantity_required,
+                    ];
+                })
                 ->toArray();
         } catch (\Exception $e) {
             throw $e;

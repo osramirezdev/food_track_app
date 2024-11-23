@@ -8,8 +8,10 @@ enum RecipeNameEnum: string {
     case papas_con_queso = 'papas_con_queso';
     case hamburguesa = 'hamburguesa';
     case ensalada_mixta = 'ensalada_mixta';
+    case arroz_con_pollo = 'arroz_con_pollo';
 
     public static function getValues(): array {
         return array_map(fn($case) => $case->value, self::cases());
     }
 }
+

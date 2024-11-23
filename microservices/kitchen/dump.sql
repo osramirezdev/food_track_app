@@ -11,6 +11,19 @@ CREATE TYPE recipe_enum AS ENUM (
     'ensalada_mixta'
 );
 
+CREATE TYPE ingredient_enum AS ENUM (
+    'tomato',
+    'lemon',
+    'potato',
+    'rice',
+    'ketchup',
+    'lettuce',
+    'onion',
+    'cheese',
+    'meat',
+    'chicken'
+);
+
 CREATE TABLE IF NOT EXISTS kitchen.recipes (
     name recipe_enum PRIMARY KEY
 );
@@ -18,7 +31,7 @@ CREATE TABLE IF NOT EXISTS kitchen.recipes (
 CREATE TABLE IF NOT EXISTS kitchen.recipe_ingredients (
     id SERIAL PRIMARY KEY,
     recipe_name recipe_enum REFERENCES kitchen.recipes(name),
-    ingredient_name VARCHAR(50) NOT NULL,
+    ingredient_name ingredient_enum NOT NULL,
     quantity_required INT NOT NULL CHECK (quantity_required > 0)
 );
 
@@ -52,6 +65,7 @@ INSERT INTO kitchen.recipe_ingredients (recipe_name, ingredient_name, quantity_r
 ('hamburguesa'::recipe_enum, 'lettuce', 1),
 ('hamburguesa'::recipe_enum, 'tomato', 1),
 ('hamburguesa'::recipe_enum, 'onion', 1),
+('hamburguesa'::recipe_enum, 'ketchup', 2),
 -- Ensalada Mixta
 ('ensalada_mixta'::recipe_enum, 'lettuce', 1),
 ('ensalada_mixta'::recipe_enum, 'tomato', 1),

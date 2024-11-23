@@ -2,10 +2,10 @@
 
 namespace Kitchen\Service;
 
-use Kitchen\DTOs\StoreDTO;
+use Kitchen\DTOs\RecipeDTO;
 
 interface KitchenService {
-    public function selectRandomRecipe(): StoreDTO;
+    public function selectRandomRecipe(): RecipeDTO;
     public function processMessages(): void;
     public function initializeRabbitMQ(): void;
 }
