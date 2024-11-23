@@ -9,8 +9,6 @@ use Order\Providers\Interfaces\IRabbitMQProvider;
 use Order\Repositories\OrderRepository;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use Order\Enums\RecipeNameEnum;
-use Order\Enums\OrderStatusEnum;
 
 class OrderServiceImpl implements OrderService {
     private OrderRepository $orderRepository;
@@ -25,7 +23,6 @@ class OrderServiceImpl implements OrderService {
     }
 
     public function initializeRabbitMQ(): void {
-        Log::channel('console')->debug("Init exchange and binding for RabbitMQ Order");
         $this->provider->declareExchange('order_exchange', 'topic');
         /**
          * FIXME
@@ -34,7 +31,6 @@ class OrderServiceImpl implements OrderService {
          */
         $this->provider->declareExchange('kitchen_exchange', 'topic');
         $this->provider->declareQueueWithBindings('order_queue', 'kitchen_exchange', 'order.kitchen');
-        Log::channel('console')->debug("Configuración de RabbitMQ completada.");
     }
 
     public function processMessages(): void {
@@ -44,11 +40,8 @@ class OrderServiceImpl implements OrderService {
             'callback' => function ($message) {
                 $data = json_decode($message->getBody(), true);
                 $routingKey = $message->get('routing_key');
-                Log::channel('console')->debug("Se recibe este id ", ["data" => $data]);
                 $orderDTO = OrderDTO::from($data);
                 $this->updateOrderRecipe($orderDTO);
-                Log::info("Consuming from routing key: {$routingKey}");
-
             },
         ]);
     }
@@ -58,7 +51,6 @@ class OrderServiceImpl implements OrderService {
             'recipe_name' => null,
         ]);
         $orderDTO = OrderMapper::entityToDto($order);
-        Log::channel('console')->debug("Se creo orden ", ["data" => $orderDTO]);
         $this->publishToKitchen($orderDTO);
         return $orderDTO;
     }
@@ -66,7 +58,6 @@ class OrderServiceImpl implements OrderService {
     public function updateOrderRecipe(OrderDTO $dto): void {
         try {
             $order = OrderMapper::dtoToEntity($dto);
-            Log::channel('console')->debug("Entity queda ", ["data" => $dto]);
             $this->orderRepository->updateRecipeName($order);
         } catch (Exception $e) {
             throw new Exception("Error updating recipe name: " . $e->getMessage());
@@ -85,7 +76,6 @@ class OrderServiceImpl implements OrderService {
 
     private function publishToKitchen(OrderDTO $dto): void {
         try {
-            Log::channel('console')->debug("Publicando a kitchen ", ["data" => $dto]);
             $message = json_encode($dto->toArray());
             $this->provider->executeStrategy('publish', [
                 'channel' => $this->provider->getChannel(),

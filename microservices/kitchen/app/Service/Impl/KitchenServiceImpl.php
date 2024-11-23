@@ -30,7 +30,6 @@ class KitchenServiceImpl implements KitchenService {
     }
 
     public function initializeRabbitMQ(): void {
-        Log::channel('console')->debug("Init exchange and binding for RabbitMQ Kitchen");
         $this->provider->declareExchange('kitchen_exchange', 'topic');
         /**
          * FIXME
@@ -44,13 +43,7 @@ class KitchenServiceImpl implements KitchenService {
 
     public function selectRandomRecipe(): RecipeDTO {
         $recipeEntity = RecipeEntity::with('ingredients')->inRandomOrder()->first();
-
-        Log::channel('console')->debug("Selected Recipe (entity)", [
-            'recipe' => $recipeEntity,
-        ]);
-
         $recipeDTO = RecipeMapper::entityToDTO($recipeEntity);
-
         return $recipeDTO;
     }
 
@@ -60,24 +53,11 @@ class KitchenServiceImpl implements KitchenService {
             'queue' => 'kitchen_queue',
             'callback' => function ($message) {
                 $data = json_decode($message->getBody(), true);
-                Log::channel('console')->info('Request:',["data"=>$data]);
-                if ($data === null && json_last_error() !== JSON_ERROR_NONE) {
-                    throw new \Exception("Error decoding JSON: " . json_last_error_msg());
-                }
-
-                // Ahora puedes crear un DTO a partir del array si es necesario
                 $orderDTO = OrderDTO::from($data);
                 $routingKey = $message->get('routing_key');
-                Log::channel('console')->debug("Se recibe este routin key", ["routingKey"=>$routingKey]);
-                Log::channel('console')->debug("Se recibe data ", ["data"=>$data]);
-                Log::channel('console')->debug("Order (dto) ", ["id"=>$orderDTO]);
                 if (str_starts_with($routingKey, 'order.')) {
                     $recipeDTO = $this->selectRandomRecipe();
-                    Log::channel('console')->debug("Selected Recipe (DTO)", [
-                        'recipe' => $recipeDTO->toArray(),
-                    ]);
                     $storeDTO = StoreDTOMapper::fromRecipeDTO($recipeDTO, $orderDTO->orderId);
-                    Log::channel('console')->debug("Existe storeDTO", ["storeDto"=>$storeDTO]);
                     $this->processOrderMessage($storeDTO);
                 } elseif (str_starts_with($routingKey, 'store.')) {
                     $this->processStoreMessage($data);

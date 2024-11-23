@@ -6,7 +6,6 @@ use Kitchen\DTOs\StoreDTO;
 use Kitchen\Enums\RecipeNameEnum;
 use Kitchen\Enums\StoreAvailabilityEnum;
 use Kitchen\Strategies\Kitchen\KitchenStrategy;
-use Illuminate\Support\Facades\Log;
 use Kitchen\Enums\OrderStatusEnum;
 use Kitchen\Providers\Interfaces\IRabbitMQKitchenProvider;
 use Kitchen\DTOs\OrderDTO;
@@ -26,9 +25,7 @@ class NotAvailableIngredientsStrategy implements KitchenStrategy {
     }
 
     public function apply(StoreDTO $storeDTO): void {
-        Log::info("Publish to kitchen_exchange Order Not Available.");
         $this->publishToOrder($storeDTO);
-        Log::info("Theres not available ingredients. Recipe: '{$storeDTO->recipeName}', consulting to store again.");
     }
 
     private function publishToOrder(StoreDTO $storeDTO): void {
@@ -37,13 +34,12 @@ class NotAvailableIngredientsStrategy implements KitchenStrategy {
             RecipeNameEnum::from($storeDTO->recipeName),
             OrderStatusEnum::ESPERANDO,
         );
+        $message = json_encode($orderDTO->toArray());
         $this->provider->executeStrategy('publish', [
             'channel' => $this->provider->getChannel(),
             'exchange' => 'kitchen_exchange',
             'routingKey' => 'order.kitchen',
-            'message' => [
-                $orderDTO
-            ],
+            'message' => $message,
         ]);
     }
 
