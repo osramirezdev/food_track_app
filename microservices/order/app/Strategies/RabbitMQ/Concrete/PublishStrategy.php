@@ -1,9 +1,9 @@
 <?php
 
-namespace Kitchen\Strategies\RabbitMQ\Concrete;
+namespace Order\Strategies\RabbitMQ\Concrete;
 
 use Illuminate\Support\Facades\Log;
-use Kitchen\Strategies\RabbitMQ\RabbitMQStrategy;
+use Order\Strategies\RabbitMQ\RabbitMQStrategy;
 use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerInterface;
 
@@ -22,6 +22,7 @@ class PublishStrategy implements RabbitMQStrategy {
     }
 
     public function execute(array $params): void {
+        Log::channel('console')->debug("Publishing to kitchen ", ["data" => $params]);
         $message = new AMQPMessage(
             json_encode($params['message']),
             [
@@ -37,7 +38,7 @@ class PublishStrategy implements RabbitMQStrategy {
             $params['exchange'],
             $params['routingKey']
         );
-        Log::channel('console')->info('Message published to exchange: ' . $params['exchange'] . ', and routing key: ' . $params['routingKey']);
+        Log::channel('console')->info('Message published to exchange: ' . $params['exchange'] . ', and routing key: ' . $params['routingKey'] . $params['message']);
         $this->logger->info('Message published to exchange: ' . $params['exchange'] . ', and routing key: ' . $params['routingKey']);
 
     }

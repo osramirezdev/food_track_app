@@ -3,12 +3,12 @@
 namespace Kitchen\Strategies\Kitchen\Concrete;
 
 use Kitchen\DTOs\StoreDTO;
+use Kitchen\Enums\RecipeNameEnum;
 use Kitchen\Enums\StoreAvailabilityEnum;
 use Kitchen\Strategies\Kitchen\KitchenStrategy;
-use Illuminate\Support\Facades\Log;
 use Kitchen\Enums\OrderStatusEnum;
 use Kitchen\Providers\Interfaces\IRabbitMQKitchenProvider;
-use Order\DTOs\OrderDTO;
+use Kitchen\DTOs\OrderDTO;
 
 class NotAvailableIngredientsStrategy implements KitchenStrategy {
     private IRabbitMQKitchenProvider $provider;
@@ -25,24 +25,21 @@ class NotAvailableIngredientsStrategy implements KitchenStrategy {
     }
 
     public function apply(StoreDTO $storeDTO): void {
-        Log::info("Publish to kitchen_exchange Order Not Available.");
         $this->publishToOrder($storeDTO);
-        Log::info("Theres not available ingredients. Recipe: '{$storeDTO->recipeName}', consulting to store again.");
     }
 
     private function publishToOrder(StoreDTO $storeDTO): void {
-        $orderDTO = OrderDTO::from([
-            "orderId"=> $storeDTO->orderId,
-            "recipeName"=> $storeDTO->recipeName,
-            "status" => OrderStatusEnum::ESPERANDO,
-        ]);
+        $orderDTO = new OrderDTO(
+            $storeDTO->orderId,
+            RecipeNameEnum::from($storeDTO->recipeName),
+            OrderStatusEnum::ESPERANDO,
+        );
+        $message = json_encode($orderDTO->toArray());
         $this->provider->executeStrategy('publish', [
             'channel' => $this->provider->getChannel(),
             'exchange' => 'kitchen_exchange',
             'routingKey' => 'order.kitchen',
-            'message' => [
-                $orderDTO
-            ],
+            'message' => $message,
         ]);
     }
 

@@ -2,6 +2,7 @@
 
 namespace Order\Providers;
 
+use Order\Factories\RabbitMQStrategyFactory;
 use Order\Providers\Interfaces\IRabbitMQProvider;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -9,8 +10,15 @@ use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
-class RabbitMQProvider implements IRabbitMQProvider{
+class RabbitMQOrderProvider implements IRabbitMQProvider{
     private ?AMQPStreamConnection $connection = null;
+    private RabbitMQStrategyFactory $strategyFactory;
+
+    public function __construct(
+        RabbitMQStrategyFactory $strategyFactory
+    ) {
+        $this->strategyFactory = $strategyFactory;
+    }
 
     private function validateConfiguration(): void {
         $requiredKeys = ['host', 'port', 'username', 'password', 'queue'];
@@ -40,50 +48,6 @@ class RabbitMQProvider implements IRabbitMQProvider{
         }
     }
 
-    public function publish(string $exchange, string $routingKey, array $messageBody): void {
-        try {
-            $this->declareExchange($exchange, 'topic');
-
-            $this->connect();
-            $channel = $this->connection->channel();
-
-            $message = new AMQPMessage(json_encode($messageBody), [
-                'content_type' => 'application/json',
-                'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT,
-            ]);
-
-            $channel->basic_publish($message, $exchange, $routingKey);
-        } catch (Exception $e) {
-            logger()->error('Error al publicar mensaje en RabbitMQ: ' . $e->getMessage());
-            throw $e;
-        }
-    }
-
-    public function consume(string $queue, callable $callback): void {
-        try {
-            $this->connect();
-
-            $channel = $this->connection->channel();
-
-            $channel->queue_declare($queue, false, true, false, false);
-            $channel->basic_consume($queue, '', false, true, false, false, $callback);
-
-            while ($channel->is_consuming()) {
-                $channel->wait();
-            }
-
-            $channel->close();
-        } catch (Exception $e) {
-            logger()->error('Error al consumir RabbitMQ: ' . $e->getMessage());
-            throw $e;
-        }
-    }
-
-    public function getChannel(): AMQPChannel {
-        $this->connect();
-        return $this->connection->channel();
-    }
-
     public function declareExchange(string $exchangeName, string $type = 'topic', bool $durable = true): void {
         $this->connect();
         $channel = $this->getChannel();
@@ -95,6 +59,33 @@ class RabbitMQProvider implements IRabbitMQProvider{
             $durable,
             false
         );
+    }
+
+    public function executeStrategy(string $type, array $params): void {
+        $this->connect();
+        $channel = $this->connection->channel();
+
+        $strategy = $this->strategyFactory->getStrategy($type);
+        Log::debug("Se ha obtenido la estregia ", ["strategy" => $strategy]);
+
+        $strategy->execute(array_merge(['channel' => $channel], $params));
+
+        $channel->close();
+    }
+
+    public function declareQueueWithBindings(string $queueName, string $exchangeName, string $routingKey): void {
+        $this->connect();
+        $channel = $this->getChannel();
+
+        $channel->queue_declare($queueName, false, true, false, false);
+        $channel->queue_bind($queueName, $exchangeName, $routingKey);
+
+        Log::info("Queue '{$queueName}' bound to exchange '{$exchangeName}' with routing key '{$routingKey}'");
+    }
+
+    public function getChannel(): AMQPChannel {
+        $this->connect();
+        return $this->connection->channel();
     }
 
     public function __destruct() {

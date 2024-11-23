@@ -11,6 +11,7 @@ use Order\Factories\OrderDTOFactory;
 class OrderMapper {
     public static function dtoToEntity(OrderDTO $orderDTO): OrderEntity {
         $orderEntity = new OrderEntity();
+        $orderEntity->id = $orderDTO->orderId ? $orderDTO->orderId : null;
         $orderEntity->recipe_name = $orderDTO->recipeName ? $orderDTO->recipeName->value : null;
         $orderEntity->status = $orderDTO->status->value;
         return $orderEntity;

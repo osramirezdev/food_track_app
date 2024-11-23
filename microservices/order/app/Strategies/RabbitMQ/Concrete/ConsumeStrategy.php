@@ -1,9 +1,9 @@
 <?php
 
-namespace Kitchen\Strategies\RabbitMQ\Concrete;
+namespace Order\Strategies\RabbitMQ\Concrete;
 
 use Illuminate\Support\Facades\Log;
-use Kitchen\Strategies\RabbitMQ\RabbitMQStrategy;
+use Order\Strategies\RabbitMQ\RabbitMQStrategy;
 use Psr\Log\LoggerInterface;
 
 class ConsumeStrategy implements RabbitMQStrategy {
