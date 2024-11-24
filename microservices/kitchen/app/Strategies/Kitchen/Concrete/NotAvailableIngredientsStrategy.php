@@ -44,13 +44,12 @@ class NotAvailableIngredientsStrategy implements KitchenStrategy {
     }
 
     private function publishToStore(StoreDTO $storeDTO): void {
+        $message = json_encode($storeDTO->toArray());
         $this->provider->executeStrategy('publish', [
             'channel' => $this->provider->getChannel(),
             'exchange' => 'kitchen_exchange',
             'routingKey' => 'store.kitchen',
-            'message' => [
-                $storeDTO
-            ],
+            'message' => $message,
         ]);
     }
 }

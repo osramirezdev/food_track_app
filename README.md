@@ -1,5 +1,5 @@
 # Prueba Técnica Alegra: Gestión Pedidos de kitchen 🍽️
-### Reto: 💥 Jornada de almuerzo ¡Gratis!
+## Reto: 💥 Jornada de almuerzo ¡Gratis!
 
 Este proyecto implementa una aplicación de pedidos para un restaurante, utilizando una **arquitectura de microservicios**. La aplicación permite:
 - Hacer pedidos de platos aleatorios.
@@ -8,50 +8,64 @@ Este proyecto implementa una aplicación de pedidos para un restaurante, utiliza
 
 ## Arquitectura
 El proyecto consta de los siguientes microservicios:
-- **BFF (Backend for Frontend):** Interfaz que maneja las peticiones del cliente.
-- **Kitchen:** Selecciona aleatoriamente las recetas y prepara los platos.
+- **Order:** Se encarga de recibir la peticion de un pedido, y manejar el estado de los pedidos.
+- **Kitchen:** Selecciona aleatoriamente las recetas y prepara los platos, se comunica con `Store` para validar disponibilidad.
 - **Store:** Gestiona el inventario de ingredientes, reponiéndolos si es necesario.
-- **Mall:** Se conecta a una API externa para comprar ingredientes.
 
 ## Requisitos
 - Docker y Docker Compose.
 - PHP y Laravel.
 
 ## Diagrama de secuencia inicial
+Se ha simplificado por ahora la funcionalidad de las aplicaciones, fundamentalmente realizaran estas operaciones, pemitiendo escalar verticalmente en el futuro.
 ```mermaid
 sequenceDiagram
-    participant Cliente
-    participant BFF as Backend for Frontend (BFF)
-    participant Kitchen as Servicio de Kitchen
-    participant RabbitMQ as RabbitMQ
-    participant Store as Servicio de Store
-    participant DB as PostgreSQL
-    participant MercadoAPI as API Mall
+    participant Order
+    participant Kitchen
+    participant Store
 
-    Cliente ->> BFF: Solicitar pedido de plato
-    BFF ->> RabbitMQ: Publicar mensaje "Orden de Preparación de Plato"
-    RabbitMQ ->> Kitchen: Consumir mensaje "Orden de Preparación de Plato"
-    Kitchen ->> Kitchen: Seleccionar receta aleatoria
-    Kitchen ->> RabbitMQ: Publicar mensaje "Solicitud de Ingredientes"
-    RabbitMQ ->> Store: Consumir mensaje "Solicitud de Ingredientes"
-    
-    Store ->> DB: Verificar inventario
-    alt Ingredientes Suficientes
-        Store -->> Kitchen: Enviar ingredientes necesarios
-    else Ingredientes Insuficientes
-        Store ->> RabbitMQ: Publicar mensaje "Solicitud de Compra de Ingredientes"
-        RabbitMQ ->> MercadoAPI: Enviar solicitud de compra de ingredientes a API de Plaza
-        MercadoAPI -->> RabbitMQ: Responder con cantidad comprada
-        RabbitMQ ->> Store: Notificación de compra exitosa
-        Store ->> DB: Actualizar inventario con ingredientes comprados
-        Store -->> Kitchen: Enviar ingredientes necesarios
+    Note over Order: Cliente inicia un pedido
+    Order->>Kitchen: Crear pedido (RecipeNameEnum, PENDIENTE)
+    Kitchen->>Store: Consultar disponibilidad de ingredientes (RecipeNameEnum)
+
+    alt Ingredientes disponibles
+        Store->>Kitchen: Ingredientes disponibles (AVAILABLE)
+        Kitchen->>Order: Pedido en preparación (PROCESANDO)
+        Note over Kitchen: Simula preparación (5 segundos)
+        Kitchen->>Order: Pedido listo (LISTO)
+    else Ingredientes no disponibles
+        Store->>Kitchen: Ingredientes no disponibles (NOT_AVAILABLE)
+        Kitchen->>Order: Pedido en espera (ESPERANDO)
+        Note over Kitchen: Publica a Store para reintentar disponibilidad
     end
-
-    Kitchen ->> DB: Marcar pedido como "En preparación"
-    Kitchen ->> Kitchen: Preparar el plato
-    Kitchen ->> DB: Marcar pedido como "Listo"
-    Kitchen ->> RabbitMQ: Publicar mensaje "Plato Listo"
-    RabbitMQ ->> BFF: Notificación de "Plato Listo"
-    BFF -->> Cliente: Actualización del estado del pedido
-
 ```
+
+## Comandos de incializacion
+
+### 1. Crear Contenedor Orquestador
+    Desde la raíz del proyecto, construye y ejecuta el contenedor que desplegará la aplicación completa:
+    ```bash
+    docker build -t alegra .
+    docker run -d --rm -v /var/run/docker.sock:/var/run/docker.sock alegra
+    ```
+### 2. Configurar Archivos `.env`
+    Copia los archivos de ejemplo .env.example para cada microservicio:
+    ```bash
+    cp microservices/order/.env.example microservices/order/.env
+    cp microservices/kitchen/.env.example microservices/kitchen/.env
+    cp microservices/store/.env.example microservices/store/.env
+    ```
+### 3. Iniciar Microservicios
+    Ejecuta los siguientes comandos para construir y desplegar cada microservicio, queda pendiente mejorar esto en el orquestador:
+    ```bash
+    cd ./microservices/order/ && docker compose up --build -d
+    cd ./microservices/kitchen/ && docker compose up --build -
+    cd ./microservices/store/ && docker compose up --build -d
+    ```
+    RabbitMQ se inicializa automáticamente mediante el contenedor orquestador, y la red Docker compartida.
+
+
+### Estructura de microservicios
+- [Revisión general del directorio y archivos del microservicio Order](microservices/order/docs/project-structure.md)
+- [Revisión general del directorio y archivos del microservicio Kitchen](microservices/kitchen/docs/project-structure.md)
+- [Revisión general del directorio y archivos del microservicio Store](microservices/store/docs/project-structure.md)

@@ -8,7 +8,7 @@ Este microservicio se encarga de recibir un pedido, elegir una receta, publicar 
 
 ## Estructura del directorio actual 
 
-### Path: `/home/oramirez/Documents/repositorios/alegra/prueba_tecnica_alegra_oscar_ramirez/microservices/kitchen/`
+### Path: `./prueba_tecnica_alegra_oscar_ramirez/microservices/kitchen/`
 ```bash
 .
 ├── Console
@@ -56,7 +56,7 @@ Este microservicio se encarga de recibir un pedido, elegir una receta, publicar 
 ## Descripción de Archivos y Funcionalidades
 
 ## `ConsumeKitchenMessages.php`
-Este archivo deberia tener la logica de inicializacion de rabbitmq, y de invocar al consumer y producer en su servicio.
+Este archivo contiene la logica de incializacion de rabbitmq delegando la responsabilidad al microservicio.
 ```php
 <?php
 
@@ -87,7 +87,7 @@ class ConsumeKitchenMessages extends Command {
 }
 ```
 ## `IngredientEnum.php`
-Enums para ingredientes.
+Enums para ingredientes, que deberia ser comun entre microservicios para standarizar la comunicacion.
 ```php
 <?php
 
@@ -125,7 +125,7 @@ enum OrderStatusEnum: string {
 }
 ```
 ## `RecipeNameEnum.php`
-Enums para ingredientes.
+Enums para ingredientes, tambien debe ser incluido en los distintos microservicios, para standarizar el manejo de platos.
 ```php
 <?php
 
@@ -137,6 +137,7 @@ enum RecipeNameEnum: string {
     case papas_con_queso = 'papas_con_queso';
     case hamburguesa = 'hamburguesa';
     case ensalada_mixta = 'ensalada_mixta';
+    case arroz_con_pollo = 'arroz_con_pollo';
 
     public static function getValues(): array {
         return array_map(fn($case) => $case->value, self::cases());
@@ -144,7 +145,7 @@ enum RecipeNameEnum: string {
 }
 ```
 ## `StoreAvailabilityEnum.php`
-Enums para manejar disponibilidades de ingredientes.
+Enums para manejar disponibilidades de ingredientes, actualmente la logica lo maneja Kitchen. Pero considero que `Store` debe validar la disponabilidad y responder un dto que contenga este enum, y `Kitchen` en vez de analizar esto, simplemente ejecuta la estrategia correspondiente.
 ```php
 <?php
 
@@ -156,22 +157,31 @@ enum StoreAvailabilityEnum: string {
 }
 ```
 ## `OrderDTO.php`
-Este archivo contiene el objeto para manejo de datos de MS Store.
+Este archivo contiene el objeto para manejo de datos de MS Order, sirve de comunicacion entre `Kitchen` y `Order` para comunicar el estado de los platos.
 ```php
 <?php
 
 namespace Kitchen\DTOs;
 
+use Kitchen\Enums\OrderStatusEnum;
+use Kitchen\Enums\RecipeNameEnum;
 use Spatie\LaravelData\Data;
 
 class OrderDTO extends Data {
-    public ?int $orderId;
-    public string $recipeName;
-    public string $status;
+
+    public function __construct(
+        public ?int $orderId = null,
+        public ?RecipeNameEnum $recipeName = null,
+        public ?OrderStatusEnum $status = OrderStatusEnum::PENDIENTE,
+        public ?string $createdAt = null,
+        public ?string $updatedAt = null,
+    ) { }
+
 }
 ```
 ## `StoreDTO.php`
-Este archivo contiene el objeto para manejo de datos de MS Store.
+Este archivo contiene el objeto para manejo de datos de MS Store, y a este dto creo que hay que agregar el enum de disponibilidad, para que `Kitchen` a partir de eso sepa que estrategia usar. Se delega la responsabilidad de determinar disponibilidad a `Store`.
+El metodo `hasSufficientStock` deberia pertenecer a otra abstraccion, deberia ser responsabilidad de `Store` no de `Kitchen`.
 ```php
 <?php
 
@@ -182,39 +192,28 @@ use Kitchen\Enums\IngredientEnum;
 use Spatie\LaravelData\Data;
 
 class StoreDTO extends Data {
-    public ?int $orderId;
-    public string $recipeName;
-    public array $ingredientsInStore;
 
-    private static function mappingIngredients(array $ingredients): array {
-        return array_map(function ($ingredient) {
-            return [
-                'ingredient' => IngredientEnum::from($ingredient->ingredient_name)->value,
-                'quantity_required' => $ingredient->quantity_required,
-                'current_stock' => $ingredient->current_stock ?? 0,
-            ];
-        }, $ingredients);
-    }
+    public function __construct(
+        public ?int $orderId,
+        public string $recipeName,
 
-    public static function fromArray(array $data): self {
-        return self::from([
-            'orderId' => $data['orderId'],
-            'recipeName' => $data['recipeName'],
-            'ingredientsInStore' => self::mappingIngredients($data['ingredientsInStore'] ?? []),
-        ]);
-    }
+        /** @var array<array{name: string, quantity_available: int}> */
+        public array $ingredients,
 
-    public static function fromRecipe(int $orderId, string $recipeName, array $ingredients): self {
-        return self::from([
-            'orderId' => $orderId,
-            'recipeName' => $recipeName,
-            'ingredientsInStore' => self::mappingIngredients($ingredients),
-        ]);
+        public ?string $created_at = null,
+        public ?string $updated_at = null,
+    ) { }
+
+    // metodo a redistribuir y refactorizar.
+    public function hasSufficientStock(): bool {
+        Log::channel("console")->info("ingredientes ahora: ", [""=>$this->ingredients]);
+        return collect($this->ingredients)
+            ->every(fn($ingredient) => $ingredient->quantity_available > 0);
     }
 }
 ```
 ## `RabbitMQStrategyFactory.php`
-Este archivo contiene el patron de fabrica para determinar cual sera la estrategia a implementar para el proveedor de rabbitmq.
+Este archivo contiene el patron de fabrica para determinar cual sera la estrategia a implementar para el proveedor de rabbitmq, actualmente estas estrategias estan standarizadas para todos los microservicios. En el futuro podria ser una libreria, por ahora se replica tal cual para cada microservicio.
 ```php
 <?php
 
@@ -245,7 +244,7 @@ class RabbitMQStrategyFactory {
 }
 ```
 ## `IRabbitMQKitchenProvider.php`
-Este archivo contiene los metodos para el provider de rabbitmq
+Este archivo contiene los metodos para el provider de rabbitmq, el cual esta standarizado para la inicializacion de rabbitmq en todos los microservicios.
 ```php
 <?php
 
@@ -259,7 +258,7 @@ interface IRabbitMQKitchenProvider {
 }
 ```
 ## `RabbitMQKitchenProvider.php`
-Archivo con la implementacion de metodos para provider RabbitMQ.
+Archivo con la implementacion de metodos para provider RabbitMQ, tambien esta standarizado para todos los microservicios.
 ```php
 <?php
 
@@ -352,7 +351,7 @@ class RabbitMQKitchenProvider implements IRabbitMQKitchenProvider {
 }
 ```
 ## `KitchenRepository.php`
-Este archivo contiene los metodos para consultas a base de datos.
+Este archivo contiene los metodos para consultas a base de datos en `Kitchen`
 ```php
 <?php
 
@@ -363,7 +362,7 @@ interface KitchenRepository {
 }
 ```
 ## `KitchenRepositoryImpl.php`
-Este archivo contiene los metodos para consultas a base de datos.
+Este archivo contiene los metodos para consultas a base de datos, aqui obtenemos los ingredientes que requieren cada receta.
 ```php
 <?php
 
@@ -379,13 +378,18 @@ class KitchenRepositoryImpl implements KitchenRepository {
                 ->where('recipe_name', $recipeName)
                 ->select('ingredient_name', 'quantity_required')
                 ->get()
+                ->map(function ($ingredient) {
+                    return [
+                        'ingredient_name' => $ingredient->ingredient_name,
+                        'quantity_required' => $ingredient->quantity_required,
+                    ];
+                })
                 ->toArray();
         } catch (\Exception $e) {
             throw $e;
         };
     }
-}
-```
+}```
 ## `KitchenService.php`
 Este archivo contiene el contrato de estrategias para la logica de kitchen.
 ```php
@@ -402,20 +406,23 @@ interface KitchenService {
 }
 ```
 ## `KitchenServiceImpl.php`
-Este archivo contiene toda la logica de manejo de mensajes.
+Este archivo contiene toda la logica de manejo de mensajes, aqui es donde debemos decidir la estrategia a partir de lo que notifique `Store` pero en tanto no suceda eso, debemos comunicar a `Order` que ya recibimos el pedido, y le notificamos que el estado pasa a `ESPERANDO`, cuando consumimos mensaje con ingredientes disponibles, ahi avisamos a `Order` que estamos preparando plato, simulamos un tiempo de 5 segundos, y avisamos que el plato esta listo. 
 ```php
 <?php
 
 namespace Kitchen\Service\Impl;
 
+use Kitchen\DTOs\OrderDTO;
+use Kitchen\DTOs\RecipeDTO;
 use Kitchen\DTOs\StoreDTO;
-use Kitchen\Enums\RecipeNameEnum;
+use Kitchen\Entities\RecipeEntity;
 use Kitchen\Factories\KitchenStrategyFactory;
+use Kitchen\Mappers\RecipeMapper;
+use Kitchen\Mappers\StoreDTOMapper;
 use Kitchen\Providers\Interfaces\IRabbitMQKitchenProvider;
 use Kitchen\Service\KitchenService;
 use Illuminate\Support\Facades\Log;
 use Kitchen\Repository\KitchenRepository;
-use Order\DTOs\OrderDTO;
 
 class KitchenServiceImpl implements KitchenService {
     private KitchenRepository $repository;
@@ -433,7 +440,6 @@ class KitchenServiceImpl implements KitchenService {
     }
 
     public function initializeRabbitMQ(): void {
-        Log::channel('console')->debug("Init exchange and binding for RabbitMQ Kitchen");
         $this->provider->declareExchange('kitchen_exchange', 'topic');
         /**
          * FIXME
@@ -445,17 +451,10 @@ class KitchenServiceImpl implements KitchenService {
         Log::channel('console')->debug("Configuración de RabbitMQ completada.");
     }
 
-    public function selectRandomRecipe(): StoreDTO {
-        $recipes = RecipeNameEnum::getValues();
-        $recipeName = $recipes[array_rand($recipes)];
-        $ingredients = $this->repository->getIngredientsByRecipe($recipeName);
-        Log::channel('console')->debug("Ingredients ", ["ingredients"=>$ingredients]);
-        $storeDTO = StoreDTO::fromRecipe(
-            0,
-            $recipeName,
-            $ingredients
-        );
-        return $storeDTO;
+    public function selectRandomRecipe(): RecipeDTO {
+        $recipeEntity = RecipeEntity::with('ingredients')->inRandomOrder()->first();
+        $recipeDTO = RecipeMapper::entityToDTO($recipeEntity);
+        return $recipeDTO;
     }
 
     public function processMessages(): void {
@@ -464,11 +463,11 @@ class KitchenServiceImpl implements KitchenService {
             'queue' => 'kitchen_queue',
             'callback' => function ($message) {
                 $data = json_decode($message->getBody(), true);
+                $orderDTO = OrderDTO::from($data);
                 $routingKey = $message->get('routing_key');
-                Log::channel('console')->debug("Se recibe este routin key {$routingKey}");
                 if (str_starts_with($routingKey, 'order.')) {
-                    $storeDTO = $this->selectRandomRecipe();
-                    $storeDTO->orderId = $data['orderId'];
+                    $recipeDTO = $this->selectRandomRecipe();
+                    $storeDTO = StoreDTOMapper::fromRecipeDTO($recipeDTO, $orderDTO->orderId);
                     $this->processOrderMessage($storeDTO);
                 } elseif (str_starts_with($routingKey, 'store.')) {
                     $this->processStoreMessage($data);
@@ -506,19 +505,19 @@ interface KitchenStrategy {
 }
 ```
 ## `NotAvailableIngredientsStrategy.php`
-Este archivo contiene la estrategia para cuando no existan ingredientes disponibles.
+Este archivo contiene la estrategia para cuando no existan ingredientes disponibles, aqui volvemos a notificar a `Store` para que se entere que seguimos esperando el plato, por si haya tenido algun incoveniente en manejar la solicitud. Y avisameos a `Order` que estamos `ESPERANDO`.
 ```php
 <?php
 
 namespace Kitchen\Strategies\Kitchen\Concrete;
 
 use Kitchen\DTOs\StoreDTO;
+use Kitchen\Enums\RecipeNameEnum;
 use Kitchen\Enums\StoreAvailabilityEnum;
 use Kitchen\Strategies\Kitchen\KitchenStrategy;
-use Illuminate\Support\Facades\Log;
 use Kitchen\Enums\OrderStatusEnum;
 use Kitchen\Providers\Interfaces\IRabbitMQKitchenProvider;
-use Order\DTOs\OrderDTO;
+use Kitchen\DTOs\OrderDTO;
 
 class NotAvailableIngredientsStrategy implements KitchenStrategy {
     private IRabbitMQKitchenProvider $provider;
@@ -535,41 +534,37 @@ class NotAvailableIngredientsStrategy implements KitchenStrategy {
     }
 
     public function apply(StoreDTO $storeDTO): void {
-        Log::info("Publish to kitchen_exchange Order Not Available.");
         $this->publishToOrder($storeDTO);
-        Log::info("Theres not available ingredients. Recipe: '{$storeDTO->recipeName}', consulting to store again.");
     }
 
     private function publishToOrder(StoreDTO $storeDTO): void {
-        $orderDTO = OrderDTO::from([
-            "orderId"=> $storeDTO->orderId,
-            "recipeName"=> $storeDTO->recipeName,
-            "status" => $storeDTO->status,
-        ]);
+        $orderDTO = new OrderDTO(
+            $storeDTO->orderId,
+            RecipeNameEnum::from($storeDTO->recipeName),
+            OrderStatusEnum::ESPERANDO,
+        );
+        $message = json_encode($orderDTO->toArray());
         $this->provider->executeStrategy('publish', [
             'channel' => $this->provider->getChannel(),
             'exchange' => 'kitchen_exchange',
             'routingKey' => 'order.kitchen',
-            'message' => [
-                $orderDTO
-            ],
+            'message' => $message,
         ]);
     }
 
     private function publishToStore(StoreDTO $storeDTO): void {
+        $message = json_encode($storeDTO->toArray());
         $this->provider->executeStrategy('publish', [
             'channel' => $this->provider->getChannel(),
             'exchange' => 'kitchen_exchange',
             'routingKey' => 'store.kitchen',
-            'message' => [
-                $storeDTO
-            ],
+            'message' => $message,
         ]);
     }
 }
 ```
 ## `AvailableIngredientsStrategy.php`
-Este archivo contiene la estrategia para cuando no existan ingredientes disponibles.
+Este archivo contiene la estrategia para cuando existen ingredientes disponibles, aqui debemos hacer la simulacion de 5 segundos, pasar estado `PROCESANDO` y por ultimo estado `LISTO`.
 ```php
 <?php
 
@@ -651,10 +646,6 @@ class ConsumeStrategy implements RabbitMQStrategy {
 
     public function execute(array $params): void {
         Log::channel('console')->info('Init spatie log'. json_encode($params));
-        $params['channel']->queue_declare($params['queue'], false, true, false, false);
-        $params['channel']->queue_bind($params['queue'], 'order_exchange', '*.kitchen.*');
-        $this->logger->info('QUEUE "kitchen_exchange" correctly declared.');
-        $this->logger->info('QUEUE "kitchen_exchange" binding other exchanges with routing "*.kitchen.*".');
 
         $params['channel']->basic_consume(
             $params['queue'],
@@ -713,8 +704,8 @@ class PublishStrategy implements RabbitMQStrategy {
 
         $params['channel']->basic_publish(
             $message,
-            $params['exchange'],   // Usamos el exchange dinámicamente
-            $params['routingKey']  // Usamos el routingKey dinámicamente
+            $params['exchange'],
+            $params['routingKey']
         );
         Log::channel('console')->info('Message published to exchange: ' . $params['exchange'] . ', and routing key: ' . $params['routingKey']);
         $this->logger->info('Message published to exchange: ' . $params['exchange'] . ', and routing key: ' . $params['routingKey']);

@@ -102,6 +102,7 @@ enum RecipeNameEnum: string {
     case papas_con_queso = 'papas_con_queso';
     case hamburguesa = 'hamburguesa';
     case ensalada_mixta = 'ensalada_mixta';
+    case arroz_con_pollo = 'arroz_con_pollo';
 
     public static function getValues(): array {
         return array_map(fn($case) => $case->value, self::cases());
@@ -134,11 +135,14 @@ use Order\Enums\RecipeNameEnum;
 use Spatie\LaravelData\Data;
 
 class OrderDTO extends Data {
-    public ?int $orderId = null;
-    public ?RecipeNameEnum $recipeName = null;
-    public OrderStatusEnum $status = OrderStatusEnum::PENDIENTE;
-    public ?string $createdAt = null;
-    public ?string $updatedAt = null;
+    public function __construct(
+        public ?int $orderId = null,
+        public ?RecipeNameEnum $recipeName = null,
+        public ?OrderStatusEnum $status = OrderStatusEnum::PENDIENTE,
+        public ?string $createdAt = null,
+        public ?string $updatedAt = null,
+    ) { }
+
 }
 ```
 ## `RabbitMQStrategyFactory.php`
@@ -189,7 +193,7 @@ interface IRabbitMQProvider {
 }
 ```
 ## `RabbitMQOrderProvider.php`
-Archivo con la implementacion de metodos para provider RabbitMQ.
+Archivo con la implementacion de meatodos para provider RabbitMQ.
 ```php
 <?php
 
@@ -297,12 +301,11 @@ namespace Order\Repositories;
 
 use Order\Entities\OrderEntity;
 use Order\Enums\OrderStatusEnum;
-use Order\Enums\RecipeNameEnum;
 
 interface OrderRepository {
     public function create(array $data): OrderEntity;
-    public function updateRecipeName(int $orderId, RecipeNameEnum $recipeName): void;
-    public function updateStatus(int $orderId, OrderStatusEnum $status): void;
+    public function updateRecipeName(OrderEntity $orderEntity): void;
+    public function updateStatus(OrderEntity $orderEntity): void;
 }
 ```
 ## `OrderRepositoryImpl.php`
@@ -317,6 +320,7 @@ use Order\Entities\OrderEntity;
 use Order\Enums\OrderStatusEnum;
 use Order\Enums\RecipeNameEnum;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class OrderRepositoryImpl implements OrderRepository {
 
@@ -329,33 +333,41 @@ class OrderRepositoryImpl implements OrderRepository {
         return $order;
     }
 
-    public function updateRecipeName(int $orderId, RecipeNameEnum $recipeName): void {
+    public function updateRecipeName(OrderEntity $order): void {
         DB::beginTransaction();
         try {
-            $updated = OrderEntity::where('id', $orderId)->update(['recipe_name' => $recipeName->value, 'status' => OrderStatusEnum::PROCESANDO]);
+            $updated = OrderEntity::where('id', $order->id)->update([
+                'recipe_name' => $order->recipe_name,
+                'status' => $order->status ? OrderStatusEnum::from($order->status)->value : null,
+            ]);
 
             if ($updated === 0) {
-                throw new \Exception("Error updating recipe. Order: {$orderId}");
+                throw new \Exception("Error updating recipe. Order: {$order->id}");
             }
 
             DB::commit();
         } catch (\Exception $e) {
+            Log::channel('console')->debug("Error updating ", ["data" => $e]);
             DB::rollBack();
             throw $e;
         }
     }
 
-    public function updateStatus(int $orderId, OrderStatusEnum $status): void {
+    public function updateStatus(OrderEntity $order): void {
         DB::beginTransaction();
         try {
-            $updated = OrderEntity::where('id', $orderId)->update(['status' => $status->value]);
+            $updated = OrderEntity::where('id', $order->id)->update([
+                'recipe_name' => $order->recipe_name,
+                'status' => $order->status ? OrderStatusEnum::from($order->status)->value : null,
+            ]);
 
             if ($updated === 0) {
-                throw new \Exception("Error updating status. Order: {$orderId}");
+                throw new \Exception("Error updating status. Order: {$order->id}");
             }
 
             DB::commit();
         } catch (\Exception $e) {
+            Log::channel('console')->debug("Error updating ", ["data" => $e]);
             DB::rollBack();
             throw $e;
         }
@@ -393,8 +405,6 @@ use Order\Providers\Interfaces\IRabbitMQProvider;
 use Order\Repositories\OrderRepository;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use Kitchen\Enums\RecipeNameEnum;
-use Order\Enums\OrderStatusEnum;
 
 class OrderServiceImpl implements OrderService {
     private OrderRepository $orderRepository;
@@ -409,10 +419,14 @@ class OrderServiceImpl implements OrderService {
     }
 
     public function initializeRabbitMQ(): void {
-        Log::channel('console')->debug("Init exchange and binding for RabbitMQ Order");
         $this->provider->declareExchange('order_exchange', 'topic');
+        /**
+         * FIXME
+         * Find an approach in order to avoid declaration of exchanges, without depending on other microservices.
+         * Exchanges are idempotent, so they are not created if they already exist
+         */
+        $this->provider->declareExchange('kitchen_exchange', 'topic');
         $this->provider->declareQueueWithBindings('order_queue', 'kitchen_exchange', 'order.kitchen');
-        Log::channel('console')->debug("Configuración de RabbitMQ completada.");
     }
 
     public function processMessages(): void {
@@ -422,15 +436,8 @@ class OrderServiceImpl implements OrderService {
             'callback' => function ($message) {
                 $data = json_decode($message->getBody(), true);
                 $routingKey = $message->get('routing_key');
-                $orderDTO = OrderDTO::from([
-                    'orderId'=> $data['orderId'],
-                    'recipeName'=> RecipeNameEnum::from($data['recipeName']),
-                    'status'=> OrderStatusEnum::from($data['recipeName']),
-                ]);
+                $orderDTO = OrderDTO::from($data);
                 $this->updateOrderRecipe($orderDTO);
-                $this->updateOrderStatus($orderDTO);
-                Log::info("Consuming from routing key: {$routingKey}");
-
             },
         ]);
     }
@@ -446,7 +453,8 @@ class OrderServiceImpl implements OrderService {
 
     public function updateOrderRecipe(OrderDTO $dto): void {
         try {
-            $this->orderRepository->updateRecipeName($dto->orderId, $dto->recipeName);
+            $order = OrderMapper::dtoToEntity($dto);
+            $this->orderRepository->updateRecipeName($order);
         } catch (Exception $e) {
             throw new Exception("Error updating recipe name: " . $e->getMessage());
         }
@@ -454,7 +462,8 @@ class OrderServiceImpl implements OrderService {
 
     public function updateOrderStatus(OrderDTO $dto): void {
         try {
-            $this->orderRepository->updateStatus($dto->orderId, $dto->status);
+            $order = OrderMapper::dtoToEntity($dto);
+            $this->orderRepository->updateStatus($order);
         } catch (Exception $e) {
             throw new Exception("Error updating status order: " . $e->getMessage());
         }
@@ -463,13 +472,12 @@ class OrderServiceImpl implements OrderService {
 
     private function publishToKitchen(OrderDTO $dto): void {
         try {
+            $message = json_encode($dto->toArray());
             $this->provider->executeStrategy('publish', [
                 'channel' => $this->provider->getChannel(),
                 'exchange' => 'order_exchange',
-                'routingKey' => 'order.kitchen',
-                'message' => [
-                    $dto
-                ],
+                'routingKey' => 'order.kitchen.*',
+                'message' => $message,
             ]);
         } catch (Exception $e) {
             throw new Exception("Error publishing RabbitMQ: " . $e->getMessage());
@@ -562,6 +570,7 @@ class PublishStrategy implements RabbitMQStrategy {
     }
 
     public function execute(array $params): void {
+        Log::channel('console')->debug("Publishing to kitchen ", ["data" => $params]);
         $message = new AMQPMessage(
             json_encode($params['message']),
             [
@@ -577,7 +586,7 @@ class PublishStrategy implements RabbitMQStrategy {
             $params['exchange'],
             $params['routingKey']
         );
-        Log::channel('console')->info('Message published to exchange: ' . $params['exchange'] . ', and routing key: ' . $params['routingKey']);
+        Log::channel('console')->info('Message published to exchange: ' . $params['exchange'] . ', and routing key: ' . $params['routingKey'] . $params['message']);
         $this->logger->info('Message published to exchange: ' . $params['exchange'] . ', and routing key: ' . $params['routingKey']);
 
     }
