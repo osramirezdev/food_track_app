@@ -43,25 +43,25 @@ sequenceDiagram
 ## Comandos de incializacion
 
 ### 1. Crear Contenedor Orquestador
-    Desde la raíz del proyecto, construye y ejecuta el contenedor que desplegará la aplicación completa:
-    ```bash
+Desde la raíz del proyecto, construye y ejecuta el contenedor que desplegará la aplicación completa:
+```bash
     docker build -t alegra .
     docker run -d --rm -v /var/run/docker.sock:/var/run/docker.sock alegra
-    ```
+```
 ### 2. Configurar Archivos `.env`
-    Copia los archivos de ejemplo .env.example para cada microservicio:
-    ```bash
+Copia los archivos de ejemplo .env.example para cada microservicio:
+```bash
     cp microservices/order/.env.example microservices/order/.env
     cp microservices/kitchen/.env.example microservices/kitchen/.env
     cp microservices/store/.env.example microservices/store/.env
-    ```
+```
 ### 3. Iniciar Microservicios
-    Ejecuta los siguientes comandos para construir y desplegar cada microservicio, queda pendiente mejorar esto en el orquestador:
-    ```bash
+Ejecuta los siguientes comandos para construir y desplegar cada microservicio, queda pendiente mejorar esto en el orquestador:
+```bash
     cd ./microservices/order/ && docker compose up --build -d
     cd ./microservices/kitchen/ && docker compose up --build -
     cd ./microservices/store/ && docker compose up --build -d
-    ```
+```
     RabbitMQ se inicializa automáticamente mediante el contenedor orquestador, y la red Docker compartida.
 
 
