@@ -62,7 +62,7 @@ Ejecuta los siguientes comandos para construir y desplegar cada microservicio, q
     cd ./microservices/kitchen/ && docker compose up --build -
     cd ./microservices/store/ && docker compose up --build -d
 ```
-    RabbitMQ se inicializa automáticamente mediante el contenedor orquestador, y la red Docker compartida.
+RabbitMQ se inicializa automáticamente mediante el contenedor orquestador, y la red Docker compartida.
 
 
 ### Estructura de microservicios
