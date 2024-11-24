@@ -4,9 +4,7 @@
 
 Este microservicio se encarga de recibir un pedido, elegir una receta, publicar a Microservicio Order y Microservicio Store sobre la receta, y consumir respuesta de store, si hay ingredientes suficientes pasa el pedido listo a Microservicio Order. 
 
-## Estructura del Proyecto
-
-## Estructura del directorio actual 
+## Estructura del Proyecto y directorio actual 
 
 ### Path: `./prueba_tecnica_alegra_oscar_ramirez/microservices/kitchen/`
 ```bash

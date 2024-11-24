@@ -4,9 +4,7 @@
 
 Este microservicio se encarga de crear un pedido, publicar a Microservicio Kitchen el pedido y consumir respuesta de Microservicio Kitchen el estado de la misma. 
 
-## Estructura del Proyecto
-
-## Estructura del directorio actual 
+## Estructura del Proyecto y directorio actual
 
 ### Path: `/home/oramirez/Documents/repositorios/alegra/prueba_tecnica_alegra_oscar_ramirez/microservices/order/`
 ```bash
