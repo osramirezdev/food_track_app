@@ -1,0 +1,17 @@
+<div class="container">
+    <button nz-button nzType="primary" (click)="createOrder()">Solicitar Pedido</button>
+    <nz-table #basicTable [nzData]="orders" [nzBordered]="true">
+        <thead>
+            <tr>
+                <th nzWidth="25%">Pedido</th>
+                <th nzWidth="25%">Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let order of orders">
+                <td>{{ order.recipeName }}</td>
+                <td>{{ order.status }}</td>
+            </tr>
+        </tbody>
+    </nz-table>
+</div>
