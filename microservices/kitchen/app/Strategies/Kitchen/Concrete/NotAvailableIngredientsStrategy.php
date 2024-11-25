@@ -2,6 +2,7 @@
 
 namespace Kitchen\Strategies\Kitchen\Concrete;
 
+use Illuminate\Support\Facades\Log;
 use Kitchen\DTOs\StoreDTO;
 use Kitchen\Enums\RecipeNameEnum;
 use Kitchen\Enums\StoreAvailabilityEnum;
@@ -26,9 +27,11 @@ class NotAvailableIngredientsStrategy implements KitchenStrategy {
 
     public function apply(StoreDTO $storeDTO): void {
         $this->publishToOrder($storeDTO);
+        $this->publishToStore($storeDTO);
     }
 
     private function publishToOrder(StoreDTO $storeDTO): void {
+        Log::channel("console")->info("Publish to kitchen_exchange Order ESPERANDO.");
         $orderDTO = new OrderDTO(
             $storeDTO->orderId,
             RecipeNameEnum::from($storeDTO->recipeName),
@@ -44,6 +47,7 @@ class NotAvailableIngredientsStrategy implements KitchenStrategy {
     }
 
     private function publishToStore(StoreDTO $storeDTO): void {
+        Log::channel("console")->info("Recipe not available, publish to store again");
         $message = json_encode($storeDTO->toArray());
         $this->provider->executeStrategy('publish', [
             'channel' => $this->provider->getChannel(),
