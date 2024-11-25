@@ -9000,7 +9000,7 @@
             "type": "project",
             "autoload": {
                 "psr-4": {
-                    "Store\\": "app/",
+                    "App\\": "app/",
                     "Database\\Seeders\\": "database/seeders/",
                     "Database\\Factories\\": "database/factories/"
                 }

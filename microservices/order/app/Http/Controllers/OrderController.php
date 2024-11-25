@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Spatie\RouteAttributes\Attributes\Prefix;
 use Spatie\RouteAttributes\Attributes\Resource;
 use Spatie\RouteAttributes\Attributes\Post;
+use Spatie\RouteAttributes\Attributes\Get;
 use Order\Events\OrderUpdated;
 
 #[Prefix('api/order')]
@@ -24,6 +25,16 @@ class OrderController extends Controller {
 
     public function __construct(OrderService $orderService) {
         $this->orderService = $orderService;
+    }
+
+    #[Get('all')]
+    public function getAll(): JsonResponse {
+        try {
+            $ordersDTO = $this->orderService->getOrders();
+            return response()->json($ordersDTO, 201);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
     #[Post('create')]

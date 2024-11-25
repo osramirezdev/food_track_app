@@ -9,18 +9,18 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use Log;
 use Order\DTOs\OrderDTO;
 
-class OrderUpdated
-{
+class OrderUpdated implements ShouldBroadcast {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $order;
+    public OrderDTO $order;
 
     /**
      * Create a new event instance.
      */
-    public function __construct($order) {
+    public function __construct(OrderDTO $order) {
         $this->order = $order;
     }
 
@@ -30,15 +30,25 @@ class OrderUpdated
      * @return array<int, \Illuminate\Broadcasting\Channel>
      */
     public function broadcastOn() {
-        return new Channel('orders');
+        Log::channel("console")->info('Broadcasting event on channel: AllOrders');
+        return [
+            new Channel('AllOrders'),
+        ];
     }
-
+    public function broadcastAs() {
+        return 'OrderUpdated';
+    }
     public function broadcastWith() {
-        return new OrderDTO(
-            $this->order->id,
-            $this->order->recipe_name,
-            $this->order->status,
-        );
+        Log::info('Emitiendo datos del pedido:', [
+            'orderId' => $this->order->orderId,
+            'recipeName' => $this->order->recipeName,
+            'status' => $this->order->status,
+        ]);
+        return [
+            'orderId' => $this->order->orderId,
+            'recipeName' => $this->order->recipeName,
+            'status' => $this->order->status,
+        ];
     }
 
 }

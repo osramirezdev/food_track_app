@@ -8,7 +8,7 @@ Este microservicio se encarga de crear un pedido, publicar a Microservicio Kitch
 
 ### Path: `/home/oramirez/Documents/repositorios/alegra/prueba_tecnica_alegra_oscar_ramirez/microservices/order/`
 ```bash
-.
+app/
 ├── Console
 │   ├── Commands
 │   │   └── ConsumeOrderMessages.php
@@ -20,6 +20,8 @@ Este microservicio se encarga de crear un pedido, publicar a Microservicio Kitch
 ├── Enums
 │   ├── OrderStatusEnum.php
 │   └── RecipeNameEnum.php
+├── Events
+│   └── OrderUpdated.php
 ├── Factories
 │   ├── OrderDTOFactory.php
 │   └── RabbitMQStrategyFactory.php
@@ -589,4 +591,77 @@ class PublishStrategy implements RabbitMQStrategy {
 
     }
 }
+```
+## `OrderUpdated.php`
+```php
+<?php
+
+namespace Order\Events;
+
+use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PresenceChannel;
+use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+use Log;
+use Order\DTOs\OrderDTO;
+
+class OrderUpdated implements ShouldBroadcast {
+    use Dispatchable, InteractsWithSockets, SerializesModels;
+
+    public $order;
+    public $orderId;
+    public $status;
+
+    /**
+     * Create a new event instance.
+     */
+    public function __construct($order, $orderId, $status) {
+        $this->orderId = $orderId;
+        $this->status = $status;
+        $this->order = $order;
+    }
+
+    /**
+     * Get the channels the event should broadcast on.
+     *
+     * @return array<int, \Illuminate\Broadcasting\Channel>
+     */
+    public function broadcastOn() {
+        Log::channel("console")->info('Broadcasting event on channel: orders');
+        return [
+            new Channel('order.' . $this->orderId)
+        ];
+    }
+
+    public function broadcastAs(): string {
+        return 'OrderUpdate';
+    }
+
+    public function broadcastWith() {
+        return new OrderDTO(
+            $this->order->id,
+            $this->order->recipe_name,
+            $this->order->status,
+        );
+    }
+
+}
+```
+## `channels.php`
+```php
+<?php
+
+use Illuminate\Support\Facades\Broadcast;
+
+Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
+    return (int) $user->id === (int) $id;
+});
+
+Broadcast::channel('OrderUpdate', function ($user) {
+    return true;
+});
+
 ```

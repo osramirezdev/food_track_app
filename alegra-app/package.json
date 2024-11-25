@@ -22,9 +22,11 @@
     "@angular/router": "^18.2.0",
     "@ngrx/effects": "^18.1.1",
     "@ngrx/store": "^18.1.1",
+    "laravel-echo": "^1.17.0",
     "ng-zorro-antd": "^18.2.1",
     "pusher-js": "^8.4.0-rc2",
     "rxjs": "~7.8.0",
+    "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "tslib": "^2.3.0",
     "zone.js": "~0.14.10"

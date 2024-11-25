@@ -1,35 +1,46 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, Subject } from 'rxjs';
-import Pusher from 'pusher-js';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { OrderDTO } from '../dtos';
 
 @Injectable({
   providedIn: 'root',
 })
 export class OrderService {
-  private pusher: Pusher;
-  private orderUpdates = new Subject<any>();
+  private orders: Array<OrderDTO> = [];
+  private ordersSubject = new BehaviorSubject<OrderDTO[]>([]);
+   private baseUrl = 'http://localhost:8000/api/order';
 
-  constructor(private http: HttpClient) {
-    this.pusher = new Pusher('anyKey', {
-      cluster: 'mt1',
-      wsHost: 'localhost',
-      wsPort: 6001,
-      forceTLS: false,
-      disableStats: true,
+  constructor(private http: HttpClient) {}
+
+  get orders$(): Observable<OrderDTO[]> {
+    return this.ordersSubject.asObservable();
+  }
+
+  fetchOrders(): void {
+    console.log("pidiendo ordenes")
+    this.http.get<OrderDTO[]>('http://localhost:8000/api/order/all').subscribe({
+      next: (response) => {
+        console.log("ordenes", response)
+        this.orders = response;
+        this.ordersSubject.next(this.orders);
+      },
+      error: (err) => console.error('Error al obtener órdenes:', err),
     });
+  }
 
-    const channel = this.pusher.subscribe('orders');
-    channel.bind('App\\Events\\OrderUpdated', (data: any) => {
-      this.orderUpdates.next(data);
+  createOrder(): void {
+    this.http.post<OrderDTO>('http://localhost:8000/api/order/create', {}).subscribe({
+      next: (newOrder) => {
+        this.orders.push(newOrder);
+        this.ordersSubject.next(this.orders);
+      },
+      error: (err) => console.error('Error al crear orden:', err),
     });
   }
 
-  createOrder(): Observable<any> {
-    return this.http.post('http://localhost:8000/api/order/create', {});
+  getOrders(): Observable<OrderDTO[]> {
+    return this.http.get<OrderDTO[]>(`${this.baseUrl}/all`);
   }
 
-  getOrderUpdates(): Observable<any> {
-    return this.orderUpdates.asObservable();
-  }
 }

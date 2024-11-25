@@ -2,10 +2,10 @@
 
 namespace Order\Repositories\Impl;
 
+use Illuminate\Support\Collection;
 use Order\Repositories\OrderRepository;
 use Order\Entities\OrderEntity;
 use Order\Enums\OrderStatusEnum;
-use Order\Enums\RecipeNameEnum;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -56,6 +56,14 @@ class OrderRepositoryImpl implements OrderRepository {
         } catch (\Exception $e) {
             Log::channel('console')->debug("Error updating ", ["data" => $e]);
             DB::rollBack();
+            throw $e;
+        }
+    }
+
+    public function getAll(): Collection {
+        try{
+            return OrderEntity::all();
+        } catch (\Exception $e) {
             throw $e;
         }
     }

@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
-import { WelcomeComponent } from './welcome.component';
+import { OrderComponent } from './order.component';
 
 export const WELCOME_ROUTES: Routes = [
-  { path: '', component: WelcomeComponent },
+  { path: '', component: OrderComponent },
 ];
