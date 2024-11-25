@@ -1,0 +1,47 @@
+services:
+  db_kitchen:
+    build:
+      context: .
+    environment:
+      - POSTGRES_USER=${DB_USER_KITCHEN}
+      - POSTGRES_PASSWORD=${DB_PASSWORD_KITCHEN}
+      - POSTGRES_DB=${DB_KITCHEN_NAME}
+    ports:
+      - "${DB_PORT_KITCHEN}:5432"
+    networks:
+      - backend_network
+
+  kitchen-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.laravel
+    container_name: kitchen_service
+    ports:
+      - "${MS_KITCHEN_PORT}:${MS_KITCHEN_PORT}"
+    environment:
+      DB_HOST: db_kitchen
+      DB_PORT: ${DB_PORT}
+      DB_DATABASE: ${DB_KITCHEN_NAME}
+      DB_USERNAME: ${DB_USER_KITCHEN}
+      DB_PASSWORD: ${DB_PASSWORD_KITCHEN}
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      APP_PORT: ${MS_KITCHEN_PORT}
+    volumes:
+      - .:/var/www/html:delegated
+    networks:
+      - backend_network
+      - internal_network
+    depends_on:
+      - db_kitchen
+
+networks:
+  backend_network:
+    external: true
+  internal_network:
+    driver: bridge
+
+volumes:
+  db_kitchen_data:

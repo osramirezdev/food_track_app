@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  db_store:
+    build:
+      context: .
+    environment:
+      - POSTGRES_USER=${DB_USER_STORE}
+      - POSTGRES_PASSWORD=${DB_PASSWORD_STORE}
+      - POSTGRES_DB=${DB_STORE_NAME}
+    ports:
+      - "${DB_PORT_STORE}:5432"
+    networks:
+      - backend_network
+  
+  store-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.laravel
+    container_name: store_service
+    ports:
+      - "${MS_STORE_PORT}:${MS_STORE_PORT}"
+    environment:
+      DB_HOST: db_store
+      DB_PORT: ${DB_PORT}
+      DB_DATABASE: ${DB_STORE_NAME}
+      DB_USERNAME: ${DB_USER_STORE}
+      DB_PASSWORD: ${DB_PASSWORD_STORE}
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      APP_PORT: ${MS_STORE_PORT}
+    volumes:
+      - .:/var/www/html:delegated
+    networks:
+      - backend_network
+      - internal_network 
+    depends_on:
+      - db_store
+
+networks:
+  backend_network:
+    external: true
+  internal_network:
+    driver: bridge 
+
+volumes:
+  db_store_data:
