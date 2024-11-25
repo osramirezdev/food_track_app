@@ -14,13 +14,13 @@ CREATE TYPE ingredient_enum AS ENUM (
 );
 
 CREATE TABLE IF NOT EXISTS store.ingredients (
-    name ingredient_enum PRIMARY KEY,
+    ingredient_name ingredient_enum PRIMARY KEY,
     current_stock INT DEFAULT 5 CHECK (current_stock >= 0),
     created_at TIMESTAMP(6) WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP(6) WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO store.ingredients (name, current_stock) VALUES 
+INSERT INTO store.ingredients (ingredient_name, current_stock) VALUES 
 ('tomato'::ingredient_enum, 5), 
 ('lemon'::ingredient_enum, 5), 
 ('potato'::ingredient_enum, 5), 
