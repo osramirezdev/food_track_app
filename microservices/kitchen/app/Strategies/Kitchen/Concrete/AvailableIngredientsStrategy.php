@@ -23,7 +23,17 @@ class AvailableIngredientsStrategy implements KitchenStrategy {
     }
 
     public function apply(StoreDTO $storeDTO): void {
-        Log::info("Publish to kitchen_exchange Order Available.");
+        $this->provider->executeStrategy('publish', [
+            'channel' => $this->provider->getChannel(),
+            'exchange' => 'kitchen_exchange',
+            'routingKey' => 'order.kitchen',
+            'message' => [
+                'orderId' => $storeDTO->orderId,
+                'recipeName' => $storeDTO->recipeName,
+                'status' => OrderStatusEnum::PROCESANDO,
+            ],
+        ]);
+        sleep(10);
         $this->provider->executeStrategy('publish', [
             'channel' => $this->provider->getChannel(),
             'exchange' => 'kitchen_exchange',

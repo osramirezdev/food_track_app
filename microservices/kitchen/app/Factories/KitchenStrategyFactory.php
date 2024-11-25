@@ -20,40 +20,12 @@ class KitchenStrategyFactory {
     }
 
     public function getStrategy(StoreDTO $storeDTO): KitchenStrategy {
-        $type = $storeDTO->hasSufficientStock()
-            ? StoreAvailabilityEnum::AVAILABLE
-            : StoreAvailabilityEnum::NOT_AVAILABLE;
+        $type = $storeDTO->availability;
 
         if (!isset($this->strategies[$type->value])) {
             throw new InvalidArgumentException("No strategy found for type: {$type->value}");
         }
 
         return $this->strategies[$type->value];
-    }
-
-    public static function dummyStrategyAvailable(): StoreDTO {
-        return StoreDTO::from(
-            orderId: 1,
-            recipeName: 'hamburguesa',
-            ingredients: [
-                ['name' => 'meat', 'quantity_available' => 2],
-                ['name' => 'lettuce', 'quantity_available' => 2],
-                ['name' => 'tomato', 'quantity_available' => 2],
-                ['name' => 'onion', 'quantity_available' => 2],
-            ]
-        );
-    }
-
-    public static function dummyStrategyNotAvailable(): StoreDTO {
-        return StoreDTO::from(
-            orderId: 2,
-            recipeName: 'hamburguesa',
-            ingredients: [
-                ['name' => 'meat', 'quantity_available' => 0],
-                ['name' => 'lettuce', 'quantity_available' => 0],
-                ['name' => 'tomato', 'quantity_available' => 0],
-                ['name' => 'onion', 'quantity_available' => 0],
-            ]
-        );
     }
 }

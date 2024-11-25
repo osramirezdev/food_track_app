@@ -37,7 +37,9 @@ class KitchenServiceImpl implements KitchenService {
          * Exchanges are idempotent, so they are not created if they already exist
          */
         $this->provider->declareExchange('order_exchange', 'topic');
+        $this->provider->declareExchange('store_exchange', 'topic');
         $this->provider->declareQueueWithBindings('kitchen_queue', 'order_exchange', '*.kitchen.*');
+        $this->provider->declareQueueWithBindings('kitchen_queue', 'store_exchange', '*.kitchen.*');
         Log::channel('console')->debug("Configuración de RabbitMQ completada.");
     }
 
@@ -60,7 +62,10 @@ class KitchenServiceImpl implements KitchenService {
                     $storeDTO = StoreDTOMapper::fromRecipeDTO($recipeDTO, $orderDTO->orderId);
                     $this->processOrderMessage($storeDTO);
                 } elseif (str_starts_with($routingKey, 'store.')) {
-                    $this->processStoreMessage($data);
+                    Log::channel("console")->info("Mensaje de Store", ["data"=>$data]);
+                    $storeDTO = StoreDTO::from($data);
+                    Log::channel("console")->info("Store dto", ["storeDTO"=>$storeDTO]);
+                    $this->processStoreMessage($storeDTO);
                 } else {
                     Log::warning("Unrecognized routing key: {$routingKey}");
                 }

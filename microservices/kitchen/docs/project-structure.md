@@ -8,14 +8,19 @@ Este microservicio se encarga de recibir un pedido, elegir una receta, publicar 
 
 ### Path: `./prueba_tecnica_alegra_oscar_ramirez/microservices/kitchen/`
 ```bash
-.
+app/
 ├── Console
 │   ├── Commands
 │   │   └── ConsumeKitchenMessages.php
 │   └── Kernel.php
 ├── DTOs
+│   ├── IngredientDTO.php
 │   ├── OrderDTO.php
+│   ├── RecipeDTO.php
 │   └── StoreDTO.php
+├── Entities
+│   ├── RecipeEntity.php
+│   └── RecipeIngredientsEntity.php
 ├── Enums
 │   ├── IngredientEnum.php
 │   ├── OrderStatusEnum.php
@@ -25,7 +30,14 @@ Este microservicio se encarga de recibir un pedido, elegir una receta, publicar 
 │   ├── KitchenStrategyFactory.php
 │   └── RabbitMQStrategyFactory.php
 ├── Http
+│   └── Controllers
+│       ├── Controller.php
+│       └── KitchenController.php
+├── Mappers
+│   ├── RecipeMapper.php
+│   └── StoreDTOMapper.php
 ├── Models
+│   └── User.php
 ├── Providers
 │   ├── AppServiceProvider.php
 │   ├── Interfaces
@@ -109,7 +121,7 @@ enum IngredientEnum: string {
 }
 ```
 ## `OrderStatusEnum.php`
-Enums para ingredientes.
+Enums para manejo de estados de Ordenes.
 ```php
 <?php
 
@@ -143,7 +155,7 @@ enum RecipeNameEnum: string {
 }
 ```
 ## `StoreAvailabilityEnum.php`
-Enums para manejar disponibilidades de ingredientes, actualmente la logica lo maneja Kitchen. Pero considero que `Store` debe validar la disponabilidad y responder un dto que contenga este enum, y `Kitchen` en vez de analizar esto, simplemente ejecuta la estrategia correspondiente.
+Enums para manejar disponibilidades de ingredientes.
 ```php
 <?php
 
@@ -178,8 +190,7 @@ class OrderDTO extends Data {
 }
 ```
 ## `StoreDTO.php`
-Este archivo contiene el objeto para manejo de datos de MS Store, y a este dto creo que hay que agregar el enum de disponibilidad, para que `Kitchen` a partir de eso sepa que estrategia usar. Se delega la responsabilidad de determinar disponibilidad a `Store`.
-El metodo `hasSufficientStock` deberia pertenecer a otra abstraccion, deberia ser responsabilidad de `Store` no de `Kitchen`.
+Este archivo contiene el objeto para manejo de datos de MS `Store`.
 ```php
 <?php
 
@@ -187,6 +198,7 @@ namespace Kitchen\DTOs;
 
 use Illuminate\Support\Facades\Log;
 use Kitchen\Enums\IngredientEnum;
+use Kitchen\Enums\StoreAvailabilityEnum;
 use Spatie\LaravelData\Data;
 
 class StoreDTO extends Data {
@@ -195,14 +207,15 @@ class StoreDTO extends Data {
         public ?int $orderId,
         public string $recipeName,
 
-        /** @var array<array{name: string, quantity_available: int}> */
+        /** @var array<array{name: string, quantity_required: int, quantity_available: int}> */
         public array $ingredients,
+        public ?bool $checked = false,
+        public ?StoreAvailabilityEnum $availability = StoreAvailabilityEnum::NOT_AVAILABLE, // default
 
         public ?string $created_at = null,
         public ?string $updated_at = null,
     ) { }
 
-    // metodo a redistribuir y refactorizar.
     public function hasSufficientStock(): bool {
         Log::channel("console")->info("ingredientes ahora: ", [""=>$this->ingredients]);
         return collect($this->ingredients)
@@ -256,7 +269,7 @@ interface IRabbitMQKitchenProvider {
 }
 ```
 ## `RabbitMQKitchenProvider.php`
-Archivo con la implementacion de metodos para provider RabbitMQ, tambien esta standarizado para todos los microservicios.
+Archivo con la implementacion de metodos para provider `RabbitMQ`, tambien esta standarizado para todos los microservicios.
 ```php
 <?php
 
@@ -387,7 +400,8 @@ class KitchenRepositoryImpl implements KitchenRepository {
             throw $e;
         };
     }
-}```
+}
+```
 ## `KitchenService.php`
 Este archivo contiene el contrato de estrategias para la logica de kitchen.
 ```php
@@ -395,16 +409,16 @@ Este archivo contiene el contrato de estrategias para la logica de kitchen.
 
 namespace Kitchen\Service;
 
-use Kitchen\DTOs\StoreDTO;
+use Kitchen\DTOs\RecipeDTO;
 
 interface KitchenService {
-    public function selectRandomRecipe(): StoreDTO;
+    public function selectRandomRecipe(): RecipeDTO;
     public function processMessages(): void;
     public function initializeRabbitMQ(): void;
 }
 ```
 ## `KitchenServiceImpl.php`
-Este archivo contiene toda la logica de manejo de mensajes, aqui es donde debemos decidir la estrategia a partir de lo que notifique `Store` pero en tanto no suceda eso, debemos comunicar a `Order` que ya recibimos el pedido, y le notificamos que el estado pasa a `ESPERANDO`, cuando consumimos mensaje con ingredientes disponibles, ahi avisamos a `Order` que estamos preparando plato, simulamos un tiempo de 5 segundos, y avisamos que el plato esta listo. 
+Este archivo contiene toda la logica negocios exclusiva de cocina, que es escoger y preparar un plato, y solicitar a tienda los ingredientes.
 ```php
 <?php
 
@@ -445,7 +459,9 @@ class KitchenServiceImpl implements KitchenService {
          * Exchanges are idempotent, so they are not created if they already exist
          */
         $this->provider->declareExchange('order_exchange', 'topic');
+        $this->provider->declareExchange('store_exchange', 'topic');
         $this->provider->declareQueueWithBindings('kitchen_queue', 'order_exchange', '*.kitchen.*');
+        $this->provider->declareQueueWithBindings('kitchen_queue', 'store_exchange', '*.kitchen.*');
         Log::channel('console')->debug("Configuración de RabbitMQ completada.");
     }
 
@@ -468,7 +484,10 @@ class KitchenServiceImpl implements KitchenService {
                     $storeDTO = StoreDTOMapper::fromRecipeDTO($recipeDTO, $orderDTO->orderId);
                     $this->processOrderMessage($storeDTO);
                 } elseif (str_starts_with($routingKey, 'store.')) {
-                    $this->processStoreMessage($data);
+                    Log::channel("console")->info("Mensaje de Store", ["data"=>$data]);
+                    $storeDTO = StoreDTO::from($data);
+                    Log::channel("console")->info("Store dto", ["storeDTO"=>$storeDTO]);
+                    $this->processStoreMessage($storeDTO);
                 } else {
                     Log::warning("Unrecognized routing key: {$routingKey}");
                 }
@@ -503,12 +522,13 @@ interface KitchenStrategy {
 }
 ```
 ## `NotAvailableIngredientsStrategy.php`
-Este archivo contiene la estrategia para cuando no existan ingredientes disponibles, aqui volvemos a notificar a `Store` para que se entere que seguimos esperando el plato, por si haya tenido algun incoveniente en manejar la solicitud. Y avisameos a `Order` que estamos `ESPERANDO`.
+Este archivo contiene la estrategia para cuando no existan ingredientes disponibles, aqui volvemos a notificar a `Store` para que se entere que seguimos esperando el plato, por si haya tenido algun incoveniente en manejar la solicitud. Y avisaremos a `Order` que estamos `ESPERANDO`.
 ```php
 <?php
 
 namespace Kitchen\Strategies\Kitchen\Concrete;
 
+use Illuminate\Support\Facades\Log;
 use Kitchen\DTOs\StoreDTO;
 use Kitchen\Enums\RecipeNameEnum;
 use Kitchen\Enums\StoreAvailabilityEnum;
@@ -533,9 +553,11 @@ class NotAvailableIngredientsStrategy implements KitchenStrategy {
 
     public function apply(StoreDTO $storeDTO): void {
         $this->publishToOrder($storeDTO);
+        $this->publishToStore($storeDTO);
     }
 
     private function publishToOrder(StoreDTO $storeDTO): void {
+        Log::channel("console")->info("Publish to kitchen_exchange Order ESPERANDO.");
         $orderDTO = new OrderDTO(
             $storeDTO->orderId,
             RecipeNameEnum::from($storeDTO->recipeName),
@@ -551,6 +573,7 @@ class NotAvailableIngredientsStrategy implements KitchenStrategy {
     }
 
     private function publishToStore(StoreDTO $storeDTO): void {
+        Log::channel("console")->info("Recipe not available, publish to store again");
         $message = json_encode($storeDTO->toArray());
         $this->provider->executeStrategy('publish', [
             'channel' => $this->provider->getChannel(),

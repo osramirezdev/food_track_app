@@ -4,6 +4,7 @@ namespace Kitchen\DTOs;
 
 use Illuminate\Support\Facades\Log;
 use Kitchen\Enums\IngredientEnum;
+use Kitchen\Enums\StoreAvailabilityEnum;
 use Spatie\LaravelData\Data;
 
 class StoreDTO extends Data {
@@ -12,8 +13,10 @@ class StoreDTO extends Data {
         public ?int $orderId,
         public string $recipeName,
 
-        /** @var array<array{name: string, quantity_available: int}> */
+        /** @var array<array{name: string, quantity_required: int, quantity_available: int}> */
         public array $ingredients,
+        public ?bool $checked = false,
+        public ?StoreAvailabilityEnum $availability = StoreAvailabilityEnum::NOT_AVAILABLE, // default
 
         public ?string $created_at = null,
         public ?string $updated_at = null,
