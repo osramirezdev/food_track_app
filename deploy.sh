@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# es como un 'transactional' a nivel script shell?
-set -euo pipefail
-
 # FIXME: Por ahora se resume en este script, lo ideal seria llevarlo a su abstraccion correcta
 # en Jenkins u otro.
 
@@ -19,7 +16,7 @@ DOCKER_COMPOSE=$(command -v docker-compose || command -v docker compose)
 
 # funcion para verificar si existe la red compartida con los contenedores
 create_network() {
-  if ! docker network ls | grep -q "$NETWORK_NAME"; then
+  if ! docker network ls | grep $NETWORK_NAME > /dev/null; then
     echo "Creating network: $NETWORK_NAME"
     docker network create "$NETWORK_NAME"
   else
