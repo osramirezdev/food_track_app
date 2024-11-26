@@ -9,7 +9,7 @@ import { OrderDTO } from '../dtos';
 export class OrderService {
   private orders: Array<OrderDTO> = [];
   private ordersSubject = new BehaviorSubject<OrderDTO[]>([]);
-   private baseUrl = 'http://localhost:8000/api/order';
+   private baseUrl = 'http://159.203.91.255:8001/api/order';
 
   constructor(private http: HttpClient) {}
 
@@ -19,7 +19,7 @@ export class OrderService {
 
   fetchOrders(): void {
     console.log("pidiendo ordenes")
-    this.http.get<OrderDTO[]>('http://localhost:8000/api/order/all').subscribe({
+    this.http.get<OrderDTO[]>(`${this.baseUrl}/all`).subscribe({
       next: (response) => {
         console.log("ordenes", response)
         this.orders = response;
@@ -30,7 +30,7 @@ export class OrderService {
   }
 
   createOrder(): void {
-    this.http.post<OrderDTO>('http://localhost:8000/api/order/create', {}).subscribe({
+    this.http.post<OrderDTO>(`${this.baseUrl}/create`, {}).subscribe({
       next: (newOrder) => {
         this.orders.push(newOrder);
         this.ordersSubject.next(this.orders);

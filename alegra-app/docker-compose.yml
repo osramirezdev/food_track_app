@@ -1,0 +1,10 @@
+services:
+  alegra-app:
+    build: .
+    container_name: alegra-app
+    ports:
+      - '4200:8005'
+    volumes:
+      - ./:/alegra-app
+    environment:
+      - STYLE=css
