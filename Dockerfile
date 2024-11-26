@@ -6,7 +6,7 @@ WORKDIR /app
 
 COPY deploy.sh /app/deploy.sh
 COPY rabbitmq/docker-compose.yml /app/rabbitmq/docker-compose.yml
-COPY rabbitmq/.env /app/rabbitmq/.env
+COPY rabbitmq/.env.example /app/rabbitmq/.env
 
 COPY microservices /app/microservices
 
