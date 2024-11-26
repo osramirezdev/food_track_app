@@ -19,7 +19,7 @@ export class OrderService {
 
   fetchOrders(): void {
     console.log("pidiendo ordenes")
-    this.http.get<OrderDTO[]>(`${baseUrl}/all`).subscribe({
+    this.http.get<OrderDTO[]>(`${this.baseUrl}/all`).subscribe({
       next: (response) => {
         console.log("ordenes", response)
         this.orders = response;
@@ -30,7 +30,7 @@ export class OrderService {
   }
 
   createOrder(): void {
-    this.http.post<OrderDTO>(`${baseUrl}/create`, {}).subscribe({
+    this.http.post<OrderDTO>(`${this.baseUrl}/create`, {}).subscribe({
       next: (newOrder) => {
         this.orders.push(newOrder);
         this.ordersSubject.next(this.orders);
