@@ -1,6 +1,0 @@
-{
-    "require": {
-        "laravel/horizon": "^5.29",
-        "php-amqplib/php-amqplib": "^3.7"
-    }
-}
