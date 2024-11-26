@@ -16,21 +16,20 @@ RUN apt-get update && apt-get install -y \
     zip \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-COPY . /var/www/html/
+COPY ./start-server.sh .
 
-WORKDIR /var/www/html
+RUN chmod +x start-server.sh
+
+COPY . .
 
 RUN composer install --no-dev --optimize-autoloader
 
-COPY ./start-server.sh /usr/local/bin/start-server.sh
-RUN chmod +x /usr/local/bin/start-server.sh
-
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/vendor
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 EXPOSE 8000
 
 ENV APP_PORT=${MS_KITCHEN_PORT:-8000}
 
-CMD ["/bin/bash", "/usr/local/bin/start-server.sh"]
+CMD ["/bin/bash", "start-server.sh"]
