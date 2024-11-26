@@ -18,18 +18,19 @@ RUN apt-get update && apt-get install -y \
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-COPY ./start-server.sh .
+WORKDIR /app
 
-RUN chmod +x start-server.sh
+COPY ./start-server.sh /app/start-server.sh
+RUN chmod +x /app/start-server.sh
 
-COPY . .
+COPY . /app
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache
 
 EXPOSE 8005
 
-ENV APP_PORT=${MS_STORE_PORT:-8000}
+ENV APP_PORT=${MS_KITCHEN_PORT:-8000}
 
 CMD ["/bin/bash", "start-server.sh"]
