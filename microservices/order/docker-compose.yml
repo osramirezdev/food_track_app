@@ -38,6 +38,7 @@ services:
     networks:
       - backend_network
       - internal_network
+    command: ["bash", "./start-server.sh"]
     depends_on:
       - db_order
 
