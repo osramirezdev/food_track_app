@@ -2,11 +2,12 @@
 
 namespace Order\Repositories;
 
+use Illuminate\Support\Collection;
 use Order\Entities\OrderEntity;
-use Order\Enums\OrderStatusEnum;
 
 interface OrderRepository {
     public function create(array $data): OrderEntity;
     public function updateRecipeName(OrderEntity $orderEntity): void;
     public function updateStatus(OrderEntity $orderEntity): void;
+    public function getAll(): Collection;
 }

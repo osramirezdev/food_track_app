@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
  * @since 24/11/24
  */
 class MarketProxy {
+    private array $cache = [];
     private string $baseUrl;
 
     public function __construct() {
@@ -31,6 +32,7 @@ class MarketProxy {
         }
 
         $data = $response->json();
+        $this->cache[$ingredient] = $data['quantitySold'] ?? 0;
         return $data['quantitySold'] ?? 0;
     }
 }

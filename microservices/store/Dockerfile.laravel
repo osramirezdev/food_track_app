@@ -24,11 +24,11 @@ RUN chmod +x start-server.sh
 
 COPY . .
 
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-EXPOSE 8000
+EXPOSE 8005
 
 ENV APP_PORT=${MS_STORE_PORT:-8000}
 

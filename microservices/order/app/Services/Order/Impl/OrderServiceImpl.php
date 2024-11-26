@@ -2,13 +2,13 @@
 
 namespace Order\Services\Order\Impl;
 
+use Illuminate\Support\Collection;
 use Order\DTOs\OrderDTO;
 use Order\Services\Order\OrderService;
 use Order\Mappers\OrderMapper;
 use Order\Providers\Interfaces\IRabbitMQProvider;
 use Order\Repositories\OrderRepository;
 use Exception;
-use Illuminate\Support\Facades\Log;
 
 class OrderServiceImpl implements OrderService {
     private OrderRepository $orderRepository;
@@ -53,6 +53,11 @@ class OrderServiceImpl implements OrderService {
         $orderDTO = OrderMapper::entityToDto($order);
         $this->publishToKitchen($orderDTO);
         return $orderDTO;
+    }
+
+    public function getOrders(): Collection {
+        $orders = $this->orderRepository->getAll();
+        return $orders;
     }
 
     public function updateOrderRecipe(OrderDTO $dto): void {
