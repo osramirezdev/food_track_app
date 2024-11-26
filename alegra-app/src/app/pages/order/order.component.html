@@ -1,0 +1,36 @@
+<div class="order-grid" nz-row nzGutter="16">
+  <!-- Columna: EN PROCESO -->
+  <div nz-col [nzSpan]="8">
+    <h3>En Proceso</h3>
+    <nz-card *ngFor="let order of ordersInProcess" [nzBordered]="true" style="margin-bottom: 16px;">
+      <p><strong>#:</strong> {{ order.orderId }}</p>
+      <p><strong>Receta:</strong> {{ order.recipeName || "Esperando receta de cocina" }}</p>
+      <p><strong>Estado:</strong> {{ order.status }}</p>
+    </nz-card>
+  </div>
+
+  <!-- Columna: COMPLETADO -->
+  <div nz-col [nzSpan]="8">
+    <h3>Completados</h3>
+    <nz-card *ngFor="let order of completedOrders" [nzBordered]="true" style="margin-bottom: 16px;">
+      <p><strong>#:</strong> {{ order.orderId }}</p>
+      <p><strong>Receta:</strong> {{ order.recipeName || "Esperando receta de cocina" }}</p>
+      <p><strong>Estado:</strong> {{ order.status }}</p>
+    </nz-card>
+  </div>
+
+  <!-- Columna: OTROS -->
+  <div nz-col [nzSpan]="8">
+    <h3>Otros</h3>
+    <nz-card *ngFor="let order of otherOrders" [nzBordered]="true" style="margin-bottom: 16px;">
+      <p><strong>#:</strong> {{ order.orderId }}</p>
+      <p><strong>Receta:</strong> {{ order.recipeName || "Esperando receta de cocina" }}</p>
+      <p><strong>Estado:</strong> {{ order.status }}</p>
+    </nz-card>
+  </div>
+</div>
+<div class="footer-button-container">
+  <button class="request-order-button" (click)="createOrder()">
+    🛒 Solicitar Orden
+  </button>
+</div>
