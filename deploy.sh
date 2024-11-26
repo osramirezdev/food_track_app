@@ -15,6 +15,7 @@ start_microservices() {
       echo "Skipping $service: Missing docker file or incorrect structure."
     fi
   done 
+}
 
 main() {
   echo "Starting microservices deployment..."
@@ -27,11 +28,11 @@ main() {
     fi
   done
 
+
+  start_microservices
+
   echo "Deployment process completed!"
 }
 
-start_microservices
-
-}
 
 main
