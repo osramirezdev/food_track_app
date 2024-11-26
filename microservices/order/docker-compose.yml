@@ -11,7 +11,7 @@ services:
     ports:
       - "${DB_PORT_ORDER}:5432"
     networks:
-      - internal_network 
+      - internal_network
     volumes:
       - db_order_data:/var/lib/postgresql/data
 
@@ -37,7 +37,7 @@ services:
       - .:/var/www/html:delegated
     networks:
       - backend_network
-      - internal_network 
+      - internal_network
     depends_on:
       - db_order
 
@@ -45,7 +45,7 @@ networks:
   backend_network:
     external: true
   internal_network:
-    driver: bridge 
+    driver: bridge
 
 volumes:
   db_order_data:
