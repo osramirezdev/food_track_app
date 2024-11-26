@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db_order:
     build:
@@ -11,9 +9,7 @@ services:
     ports:
       - "${DB_PORT_ORDER}:5432"
     networks:
-      - internal_network
-    volumes:
-      - db_order_data:/var/lib/postgresql/data
+      - backend_network
 
   order-service:
     build:
@@ -38,7 +34,6 @@ services:
     networks:
       - backend_network
       - internal_network
-    command: ["bash", "./start-server.sh"]
     depends_on:
       - db_order
 
