@@ -422,7 +422,7 @@ class StoreRepositoryImpl implements StoreRepository {
         }
     }
 }
-s```
+```
 ## `StoreService.php`
 Este archivo contiene el contrato de estrategias para la logica de Store, por ahora solo tiene llogica para incializar rabbit y consumir mensajes.
 ```php
