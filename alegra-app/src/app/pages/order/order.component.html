@@ -29,7 +29,7 @@
         <strong>Estado:</strong> Esperando compra de ingredientes
       </p>
       <p *ngIf="order.status !== 'ESPERANDO'">
-        <strong>Estado:</strong> Otro estado: {{ order.status }}
+        <strong>Estado:</strong> {{ order.status }}
       </p>      
     </nz-card>
   </div>
