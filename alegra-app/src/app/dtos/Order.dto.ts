@@ -7,8 +7,8 @@ export class OrderDTO {
         Object.assign(this, partial);
     }
 
-    orderId?: number;
-    recipeName?: RecipeNameEnum;
+    id?: number;
+    recipe_name?: RecipeNameEnum;
     status?: OrderStatusEnum;
     createdAt?: string;
     updatedAt?: string;
