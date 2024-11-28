@@ -3,8 +3,8 @@
   <div nz-col [nzSpan]="8">
     <h3>En Proceso</h3>
     <nz-card *ngFor="let order of ordersInProcess" [nzBordered]="true" style="margin-bottom: 16px;">
-      <p><strong>#:</strong> {{ order.orderId }}</p>
-      <p><strong>Receta:</strong> {{ order.recipeName || "Esperando receta de cocina" }}</p>
+      <p><strong>#:</strong> {{ order.id }}</p>
+      <p><strong>Receta:</strong> {{ order.recipe_name || "Esperando receta de cocina" }}</p>
       <p><strong>Estado:</strong> {{ order.status }}</p>
     </nz-card>
   </div>
@@ -13,8 +13,8 @@
   <div nz-col [nzSpan]="8">
     <h3>Completados</h3>
     <nz-card *ngFor="let order of completedOrders" [nzBordered]="true" style="margin-bottom: 16px;">
-      <p><strong>#:</strong> {{ order.orderId }}</p>
-      <p><strong>Receta:</strong> {{ order.recipeName || "Esperando receta de cocina" }}</p>
+      <p><strong>#:</strong> {{ order.id }}</p>
+      <p><strong>Receta:</strong> {{ order.recipe_name || "Esperando receta de cocina" }}</p>
       <p><strong>Estado:</strong> {{ order.status }}</p>
     </nz-card>
   </div>
