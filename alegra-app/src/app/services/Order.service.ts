@@ -9,7 +9,7 @@ import { OrderDTO } from '../dtos';
 export class OrderService {
   private orders: Array<OrderDTO> = [];
   private ordersSubject = new BehaviorSubject<OrderDTO[]>([]);
-   private baseUrl = 'http://localhost:8001/api/order';
+   private baseUrl = 'http://159.203.91.255:8001/api/order';
 
   constructor(private http: HttpClient) {}
 

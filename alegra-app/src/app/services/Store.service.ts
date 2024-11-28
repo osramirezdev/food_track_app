@@ -9,7 +9,7 @@ import { IngredientsDTO } from '../dtos';
 export class StoreService {
   private ingredients: Array<IngredientsDTO> = [];
   private ingredientsSubject = new BehaviorSubject<IngredientsDTO[]>([]);
-   private baseUrl = 'http://localhost:8004/api/store';
+   private baseUrl = 'http://159.203.91.255:8004/api/store';
 
   constructor(private http: HttpClient) {}
 
