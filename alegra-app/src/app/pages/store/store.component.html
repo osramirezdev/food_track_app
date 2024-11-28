@@ -1,0 +1,23 @@
+<div class="order-grid" nz-row nzGutter="16">
+  <div nz-col [nzSpan]="8">
+    <h3>Ingredientes en Stock</h3>
+    <nz-table
+          [nzBordered]="true"
+          [nzSize]="'middle'"
+          [nzData]="ingredients"
+          [nzBordered]="true">
+          <thead>
+            <tr>
+              <th nzWidth="50%">Ingrediente</th>
+              <th nzWidth="50%">Cantidad</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let ingredient of ingredients">
+              <td>{{ ingredient.ingredient_name }}</td>
+              <td>{{ ingredient.current_stock }}</td>
+            </tr>
+          </tbody>
+        </nz-table>
+  </div>
+</div>

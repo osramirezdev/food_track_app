@@ -26,7 +26,7 @@ export class OrderComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.fetchOrders();
-    this.intervalId = setInterval(() => this.fetchOrders(), 5000);
+    this.intervalId = setInterval(() => this.fetchOrders(), 3000);
   }
 
   ngOnDestroy(): void {
