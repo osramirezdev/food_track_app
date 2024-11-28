@@ -1,0 +1,41 @@
+.order-grid {
+  h3 {
+    text-align: center;
+    margin-bottom: 16px;
+    color: #1890ff;
+  }
+
+  nz-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.footer-button-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.request-order-button {
+  background: linear-gradient(135deg, #ff7e5f, #feb47b); /* Gradiente */
+  border: none;
+  border-radius: 50px;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  padding: 12px 20px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.request-order-button:hover {
+  transform: scale(1.1); /* Crece al pasar el mouse */
+  box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.2);
+}
+
+.request-order-button:active {
+  transform: scale(0.95); /* Efecto de pulsar */
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}

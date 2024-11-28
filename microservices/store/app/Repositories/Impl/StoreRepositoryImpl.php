@@ -2,6 +2,7 @@
 
 namespace Store\Repositories\Impl;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 use Store\Entities\IngredientsEntity;
 use Store\Mappers\IngredientMapper;
@@ -45,6 +46,14 @@ class StoreRepositoryImpl implements StoreRepository {
     public function getAvailableIngredients(array $ingredientNames): array {
         try{
             return IngredientsEntity::whereIn('ingredient_name', $ingredientNames)->get()->all();
+        } catch (\Exception $e) {
+            throw $e;
+        }
+    }
+
+    public function getAll(): Collection {
+        try{
+            return IngredientsEntity::all();
         } catch (\Exception $e) {
             throw $e;
         }

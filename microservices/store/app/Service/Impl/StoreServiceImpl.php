@@ -2,6 +2,7 @@
 
 namespace Store\Service\Impl;
 
+use Illuminate\Database\Eloquent\Collection;
 use Store\DTOs\StoreDTO;
 use Store\Factories\StoreStrategyFactory;
 use Store\Providers\Interfaces\IRabbitMQProvider;
@@ -56,6 +57,11 @@ class StoreServiceImpl implements StoreService {
     
         Log::info("Buying {$qPurchased} of {$ingredient->ingredient_name}.");
         return $ingredient;
+    }
+
+    public function getIngredients(): Collection {
+        $orders = $this->repository->getAll();
+        return $orders;
     }
 
     public function processMessages(): void {

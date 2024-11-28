@@ -1,6 +1,6 @@
 <?php
 
-use Order\Services\Order\Impl\OrderServiceImpl;
+use Order\Services\Order\OrderService;
 use Illuminate\Support\Facades\Route;
 
-Route::post('/orders', [OrderServiceImpl::class, 'createOrder']);
+Route::post('/orders', [OrderService::class, 'createOrder']);
