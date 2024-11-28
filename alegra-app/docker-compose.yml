@@ -8,3 +8,12 @@ services:
       - ./:/alegra-app
     environment:
       - STYLE=css
+    networks:
+      - backend_network
+      - internal_network
+
+networks:
+  backend_network:
+    external: true
+  internal_network:
+    driver: bridge
