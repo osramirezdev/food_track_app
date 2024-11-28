@@ -23,9 +23,9 @@
   <div nz-col [nzSpan]="8">
     <h3>Otros</h3>
     <nz-card *ngFor="let order of otherOrders" [nzBordered]="true" style="margin-bottom: 16px;">
-      <p><strong>#:</strong> {{ order.id }}</p>
-      <p><strong>Receta:</strong> {{ order.recipe_name || "Esperando receta de cocina" }}</p>
-      <p><strong>Estado:</strong> {{ order.status }}</p>
+      <p><strong>#:</strong> {{ order.orderId }}</p>
+      <p><strong>Receta:</strong> {{ order.recipeName || "Esperando receta de cocina" }}</p>
+      <p><strong>Estado:</strong> {{ order.status }} compra de ingredientes</p>
     </nz-card>
   </div>
 </div>
