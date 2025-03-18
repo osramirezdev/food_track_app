@@ -1,4 +1,4 @@
-# Prueba Técnica Alegra: Gestión Pedidos de kitchen 🍽️
+# Prueba Técnica: Gestión Pedidos de kitchen 🍽️
 ## Reto: 💥 Jornada de almuerzo ¡Gratis!
 
 Este proyecto implementa una aplicación de pedidos para un restaurante, utilizando una **arquitectura de microservicios**. La aplicación permite:
